@@ -1,0 +1,9 @@
+{
+  "name": "jogo-de-modelo",
+  "version": "0.1.0",
+  "description": "Modo carreira de modelo de moda (motor da Fase 1)",
+  "type": "module",
+  "scripts": {
+    "test": "node test/simulacao.test.js"
+  }
+}
