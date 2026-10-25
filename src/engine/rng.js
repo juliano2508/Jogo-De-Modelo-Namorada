@@ -18,6 +18,12 @@ export function criarRng(semente = Date.now()) {
     inteiro: (min, max) => Math.floor(proximo() * (max - min + 1)) + min,
     // true com a probabilidade p (0 a 1)
     chance: (p) => proximo() < p,
+    // distribuição normal (Box-Muller)
+    normal(media = 0, desvio = 1) {
+      const u = Math.max(proximo(), 1e-12);
+      const v = proximo();
+      return media + desvio * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    },
     escolher: (lista) => lista[Math.floor(proximo() * lista.length)],
     embaralhar(lista) {
       const copia = [...lista];

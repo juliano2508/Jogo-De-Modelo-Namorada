@@ -43,6 +43,14 @@ export const AGENCIAS_REGIONAIS = [
   { id: 'reg-capital', nome: 'Capital Casting', tier: 4 },
 ];
 
+// Agências do circuito alternativo (para quem não foi escolhida na Seleção)
+export const AGENCIAS_ALTERNATIVAS = [
+  { id: 'alt-rota', nome: 'Rota Alternativa Models', tier: 4 },
+  { id: 'alt-passos', nome: 'Passos Novos', tier: 4 },
+  { id: 'alt-trilha', nome: 'Trilha Fashion', tier: 4 },
+  { id: 'alt-vitrine', nome: 'Vitrine Aberta', tier: 4 },
+];
+
 // prestigio: 1 a 100 (quanto maior, maior o cachê e a fama gerada)
 export const MARCAS = [
   { id: 'chanelle', nome: 'Chanelle', prestigio: 98 },
