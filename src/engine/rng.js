@@ -14,6 +14,8 @@ export function criarRng(semente = Date.now()) {
 
   return {
     proximo,
+    // estado interno, para salvar e retomar a mesma sequência (criarRng(estadoSalvo))
+    estadoInterno: () => s,
     // inteiro entre min e max (inclusive)
     inteiro: (min, max) => Math.floor(proximo() * (max - min + 1)) + min,
     // true com a probabilidade p (0 a 1)

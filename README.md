@@ -1,12 +1,27 @@
-# Jogo de Modelo
+# Primeira Capa
 
 Modo carreira de modelo de moda, feito como presente. A ideia é a mesma do nosso jogo de carreira de basquete: mundo fictício com nomes parodiados, simulação semanal, momentos decisivos com chance de sucesso, eventos com consequências e sistemas de Relações e Vida.
 
 O design doc completo está no Claude (Design Doc: Carreira de Modelo). Este README resume o que já existe no código.
 
-## Estado atual: Fase 3 (vida da carreira)
+## Como jogar
 
-Só o motor, sem interface ainda. Tudo é JavaScript puro (módulos ES), sem build e sem dependências. Requer Node 18 ou mais novo.
+```bash
+npm start        # abre o servidor em http://localhost:8080 (ou: npm start 3000)
+```
+
+Depois é só abrir o endereço no navegador. O jogo salva sozinho em 3 slots (no próprio navegador, via localStorage), então dá para fechar a aba e continuar depois. Os módulos ES não abrem direto de `file://`, por isso o servidorzinho (`scripts/servir.js`, sem dependências). Para publicar online, qualquer hospedagem estática serve (por exemplo GitHub Pages): basta servir a raiz do repositório.
+
+### Interface (Fase 4)
+
+- Identidade: capa de revista de moda. Papel creme, tinta preta e um vermelho só; títulos em Playfair Display (com fallback para serifas do sistema). Segue o tema claro/escuro do aparelho e funciona bem no celular.
+- Telas: capa com jogos salvos, criação da modelo (perfil, dificuldade, slot), painel com abas **Semana** (agenda com chance de cada trabalho, energia, resultado e contas da semana, piloto automático), **Perfil**, **Vida**, **Relações** (com rivais), **Carreira** (legado, marcos, temporadas) e **Notícias**.
+- Janelas de decisão para cada pendência do motor: ir ou ficar na Seleção, a Noite da Seleção revelada escolha por escolha (com suspense), propostas de free agency, eventos com escolhas e a aposentadoria com os quatro caminhos. A carreira termina na tela de legado.
+- Código em `src/ui/`: `acoes.js` liga os botões ao motor (nenhuma regra de jogo fica na interface), `abas.js`, `modais.js`, `inicio.js`, `jogo.js`, `save.js`.
+
+## Estado do motor: Fase 3 (vida da carreira)
+
+Tudo é JavaScript puro (módulos ES), sem build e sem dependências. Requer Node 18 ou mais novo.
 
 ```bash
 npm test                      # testes automáticos (inclui calibragem com centenas de carreiras)
@@ -86,5 +101,5 @@ simularSemana(estado, rng, escolherAutomatico(estado, agenda));
 1. **Fase 1, base:** modelo, atributos, mundo e simulação semanal. (feito)
 2. **Fase 2, mercado:** Noite da Seleção, contratos, free agency, trocas, circuito alternativo e sistema Vida com calibragem. (feito)
 3. **Fase 3, vida da carreira:** Relações com peso real, rivais, eventos com memória, aposentadoria e Hall da Fama. (feito)
-4. **Fase 4, interface:** nome do projeto, identidade visual e telas.
-5. **Fase 5, teste e balanceamento:** teste de carreira inteira no navegador, vários slots de save e ajuste final de dificuldades.
+4. **Fase 4, interface:** nome (Primeira Capa), identidade visual, telas e salvamento em 3 slots. (feito)
+5. **Fase 5, teste e balanceamento:** teste de carreira inteira no navegador, ajuste final de dificuldades.

@@ -1,9 +1,10 @@
 {
   "name": "jogo-de-modelo",
   "version": "0.1.0",
-  "description": "Modo carreira de modelo de moda (motor da Fase 1)",
+  "description": "Primeira Capa: modo carreira de modelo de moda",
   "type": "module",
   "scripts": {
-    "test": "node test/simulacao.test.js"
+    "test": "node test/simulacao.test.js",
+    "start": "node scripts/servir.js"
   }
 }
