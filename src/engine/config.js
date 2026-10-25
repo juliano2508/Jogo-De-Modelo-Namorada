@@ -55,3 +55,17 @@ export const FAIXAS_IMPOSTO = [
 ];
 
 export const DINHEIRO_INICIAL = 800;
+
+// Pontos de carreira necessários para cada nível de legado (calibrados com carreiras simuladas).
+// Resultado em 160 carreiras simuladas: ~15% discreta, ~50% destaque, ~23% Hall da Fama, ~12% Lenda.
+export const HALL_DA_FAMA = { lenda: 340, hall: 200, destaque: 110 };
+
+// Aposentadoria: entra em pauta com saúde ou resistência baixas, após 20 temporadas profissionais,
+// e é obrigatória aos 42 anos ou após 24 temporadas.
+export const APOSENTADORIA = {
+  idadeMinimaPorSaude: 30,
+  limiteSaude: 40,
+  temporadasEmPauta: 20,
+  temporadasObrigatoria: 24,
+  idadeObrigatoria: 42,
+};

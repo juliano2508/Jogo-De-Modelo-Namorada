@@ -86,6 +86,8 @@ function aplicarResultado(estado, rng, resultado) {
   }
 
   const { posicao, rodada, agenciaId } = resultado.escolha;
+  const melhor = estado.carreira.melhorPosicaoSelecao;
+  estado.carreira.melhorPosicaoSelecao = melhor === null ? posicao : Math.min(melhor, posicao);
   const agencia = estado.liga.agencias[agenciaId];
   const contrato = criarContrato({
     duracao: rodada === 1 ? 3 : 2,

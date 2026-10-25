@@ -59,7 +59,9 @@ export function gerarPropostas(estado, rng) {
     const valor = estado.overall + estado.fama * 0.2 + necessidade * 8 + rng.normal(0, cfg.ruidoOlheiros);
     const atual = estado.contrato && agencia.id === estado.agencia.id;
     if (valor < LIMIAR_INTERESSE[agencia.tier] && !atual) continue;
-    propostas.push(montarProposta(agencia, base, necessidade, valor, rng, atual));
+    // A direção da agência atual pesa na renovação; a imagem na mídia pesa nas propostas de fora.
+    const fator = atual ? 1 + (estado.relacoes.direcao - 50) / 300 : 1 + (estado.relacoes.midia - 50) / 500;
+    propostas.push(montarProposta(agencia, base * fator, necessidade, valor, rng, atual));
   }
 
   propostas.sort((a, b) => b.valor - a.valor);
@@ -124,6 +126,11 @@ export function escolherProposta(estado, rng, indice) {
 
   const agencia = estado.liga.agencias[proposta.agenciaId];
   estado.pendencia = null;
+  // Nova agência: direção e bastidores recomeçam do neutro.
+  if (agencia.id !== estado.agencia.id) {
+    estado.relacoes.direcao = 50;
+    estado.relacoes.bastidores = 50;
+  }
   entrarFase(estado, rng, 'profissional', {
     agencia,
     contrato: criarContrato({ duracao: proposta.duracao, garantiaSemanal: proposta.garantiaSemanal, tier: proposta.tier }),
@@ -142,6 +149,9 @@ export function verificarTroca(estado, rng) {
   const necessidadeAtual = atual.necessidades[estado.perfil] ?? 0.5;
   let chance = 0.04 + (1 - necessidadeAtual) * 0.06;
   if (estado.relacoes.agente < 35) chance += 0.05;
+  // Direção insatisfeita troca mais; direção satisfeita segura a modelo.
+  chance += (50 - estado.relacoes.direcao) / 800;
+  chance = limitar(chance, 0.01, 0.25);
   if (!rng.chance(chance)) return null;
 
   const candidatas = Object.values(estado.liga.agencias)
@@ -156,6 +166,8 @@ export function verificarTroca(estado, rng) {
   estado.contrato.comissao = COMISSAO_POR_TIER[nova.tier];
   estado.agencia = { id: nova.id, nome: nova.nome, tier: nova.tier };
   estado.relacoes.agente = limitar(estado.relacoes.agente + rng.inteiro(-8, 4), 0, 100);
+  estado.relacoes.direcao = 50;
+  estado.relacoes.bastidores = 50;
   registrarEvento(estado, 'troca', `${atual.nome} trocou ${estado.nome} para ${nova.nome}.`);
   return { de: atual.nome, para: nova.nome };
 }

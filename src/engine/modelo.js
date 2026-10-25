@@ -7,6 +7,9 @@ import { AGENCIAS_REGIONAIS } from './mundo.js';
 import { FASES, DIFICULDADES, DINHEIRO_INICIAL } from './config.js';
 import { criarLiga } from './liga.js';
 import { criarVidaInicial } from './vida.js';
+import { criarRelacoes } from './relacoes.js';
+import { criarRivais } from './rivais.js';
+import { criarCarreira } from './carreira.js';
 import { criarContrato, garantiaDeMercado } from './mercado.js';
 
 export function criarJogo({
@@ -35,6 +38,7 @@ export function criarJogo({
   }
 
   const liga = criarLiga(rng);
+  const rivais = criarRivais(rng);
   let agencia;
   let contrato = null;
   if (faseInicial === 'profissional') {
@@ -67,7 +71,17 @@ export function criarJogo({
     contrato, // { duracao, restante, garantiaSemanal, comissao }
     vida: criarVidaInicial(),
     liga,
-    relacoes: { agente: 50 }, // as demais entram na Fase 3
+    relacoes: criarRelacoes(), // agente, bastidores, direcao, midia, estilistas, fotografos (0 a 100)
+    rivais, // rivais com rivalidades de vários anos
+    memoria: { flags: {}, decisoes: [] }, // decisões passadas que liberam eventos futuros
+    extras: [], // contratos de exclusividade e de embaixadora (renda semanal extra)
+    carreira: criarCarreira(), // estatísticas para marcos e Hall da Fama
+    marcos: [],
+    semanaAbsoluta: 0,
+    eventoCooldown: 0,
+    aposentada: false,
+    legado: null,
+    caminhoPosCarreira: null,
     pendencia: null, // decisão ou escolha que precisa ser resolvida antes de seguir
     snapshotSelecao: null,
     ultimaSelecao: null,

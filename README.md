@@ -4,12 +4,12 @@ Modo carreira de modelo de moda, feito como presente. A ideia é a mesma do noss
 
 O design doc completo está no Claude (Design Doc: Carreira de Modelo). Este README resume o que já existe no código.
 
-## Estado atual: Fase 2 (mercado e Vida)
+## Estado atual: Fase 3 (vida da carreira)
 
 Só o motor, sem interface ainda. Tudo é JavaScript puro (módulos ES), sem build e sem dependências. Requer Node 18 ou mais novo.
 
 ```bash
-npm test                      # testes automáticos (inclui calibragem com 120 carreiras)
+npm test                      # testes automáticos (inclui calibragem com centenas de carreiras)
 node scripts/balancear.js     # tabela de balanceamento: [carreiras=40] [temporadas=15] [dificuldade=normal]
 ```
 
@@ -30,7 +30,16 @@ Despesas fixas que crescem: comissão da agência (15% a 25% conforme o tier), a
 
 **No vermelho**: juros de 1% por semana sobre o saldo negativo, pressão (menos chance de sucesso, mais cansaço) e, após 6 semanas, corte forçado do padrão de vida, começando pelo gasto mais pesado.
 
-### Calibragem
+### Fase 3: Relações, rivais, eventos e legado
+
+- **Relações** (`relacoes.js`): agente, bastidores, direção da agência, mídia, estilistas e fotógrafos (0 a 100), com efeitos reais. O agente traz mais (ou menos) ofertas e destaca melhor os trabalhos; estilistas ajudam nos desfiles e fotógrafos nos ensaios; a mídia multiplica a fama e libera patrocínios; a direção pesa na renovação e na chance de troca; os bastidores aceleram a recuperação. Sobem com bons resultados e esfriam devagar rumo ao neutro.
+- **Rivais** (`rivais.js`): 8 modelos concorrentes disputam ofertas de prestígio, a rivalidade dura vários anos e esfria aos poucos, e há um ranking anual. Rivais envelhecem, se aposentam e são substituídas.
+- **Eventos com memória** (`eventos.js`): 16 eventos com escolhas, abertos como `pendencia` do tipo `evento`. Decisões deixam lembranças que expiram: aceitar um ensaio ousado pode virar escândalo, manter uma marca polêmica pode virar boicote. A dificuldade pesa a parte negativa dos eventos. Contratos extras (exclusividade, embaixadora) rendem toda semana.
+- **Carreira e legado** (`carreira.js`): estatísticas, 14 marcos, aposentadoria (por saúde, resistência, 20 temporadas ou obrigatória aos 42), quatro caminhos pós-carreira (agência, mentora, jurada, vida tranquila) e níveis de legado por pontos: carreira discreta, de destaque, Hall da Fama e Lenda da moda.
+
+Calibragem da Fase 3 (normal): cerca de 3 eventos por temporada profissional; em 80 carreiras, ~16% discretas, ~54% de destaque, ~14% Hall da Fama e ~16% Lenda; a maioria nunca chega ao 1º do ranking. Vermelho por política: cautelosa 0%, equilibrada ~18%, ostentosa ~95%.
+
+### Calibragem (Fase 2)
 
 `scripts/balancear.js` roda carreiras inteiras no automático com três políticas de gastos. Resultado atual em dificuldade normal (40 carreiras, 15 temporadas):
 
@@ -55,6 +64,10 @@ src/engine/
   selecao.js    Noite da Seleção e decisão de ir ou ficar
   mercado.js    contratos, free agency, trocas e chamadas
   vida.js       gastos, efeitos, finanças e vermelho
+  relacoes.js   seis relações e seus efeitos
+  rivais.js     rivais, disputas e ranking anual
+  eventos.js    catálogo de eventos, memória e escolhas
+  carreira.js   marcos, aposentadoria, Hall da Fama
   auto.js       modo automático e simularCarreira
 ```
 
@@ -72,6 +85,6 @@ simularSemana(estado, rng, escolherAutomatico(estado, agenda));
 
 1. **Fase 1, base:** modelo, atributos, mundo e simulação semanal. (feito)
 2. **Fase 2, mercado:** Noite da Seleção, contratos, free agency, trocas, circuito alternativo e sistema Vida com calibragem. (feito)
-3. **Fase 3, vida da carreira:** Relações com peso real (agente, estilistas, fotógrafos, mídia, rivais), eventos com memória, aposentadoria e Hall da Fama.
+3. **Fase 3, vida da carreira:** Relações com peso real, rivais, eventos com memória, aposentadoria e Hall da Fama. (feito)
 4. **Fase 4, interface:** nome do projeto, identidade visual e telas.
 5. **Fase 5, teste e balanceamento:** teste de carreira inteira no navegador, vários slots de save e ajuste final de dificuldades.

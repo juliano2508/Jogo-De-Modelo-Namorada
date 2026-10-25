@@ -102,3 +102,17 @@ export const CIDADES_DE_ORIGEM = [
   'Curitiba', 'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Porto Alegre',
   'Florianópolis', 'Salvador', 'Recife', 'Fortaleza', 'Brasília', 'Outra',
 ];
+
+// Fotógrafos famosos (nomes parodiados), usados em eventos.
+export const FOTOGRAFOS = [
+  'Stefan Meisler', 'Mario Testini', 'Patrice Demarchelli', 'Peter Lindbergue',
+  'Annie Leibovich', 'Irving Pennington', 'Steve Klein-Mayer', 'Paolo Roversi-Nardi',
+];
+
+// Novas rivais que entram quando as antigas se aposentam.
+export const NOVOS_RIVAIS = [
+  'Luiza Monteverde', 'Isadora Falcão', 'Antonella Rossi-Lima', 'Chloé Marchand', 'Maya Okonkwo-Silva',
+  'Bianca Lombardi', 'Nina Hartmann', 'Laura Pellegrini', 'Aurora Vidigal', 'Sienna Beaumont',
+  'Tainá Albuquerque', 'Ingrid Solheim', 'Mirela Castanheira', 'Zoe Hargreaves', 'Dalila Mendonça',
+  'Vera Lindqvist',
+];

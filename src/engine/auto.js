@@ -7,8 +7,10 @@ import {
 } from './semana.js';
 import { decidirSelecao, confirmarSelecao } from './selecao.js';
 import { escolherProposta, melhorIndiceDeProposta } from './mercado.js';
+import { resolverEvento, escolhaAutomatica } from './eventos.js';
+import { decidirAposentadoria, CAMINHOS_POS_CARREIRA } from './carreira.js';
 import {
-  CATEGORIAS, nivelMaximo, custoDoNivel, mudarVida, rebaixarVidaForcado,
+  nivelMaximo, custoDoNivel, mudarVida, rebaixarVidaForcado,
   custoSemanalVida, custoBasico, inflacao,
 } from './vida.js';
 
@@ -23,6 +25,22 @@ export const POLITICAS_VIDA = {
 
 const ORDEM_DE_PRIORIDADE = ['moradia', 'equipe', 'transporte', 'estilo', 'relacionamento', 'pet'];
 
+// No automático a aposentadoria vem por saúde baixa, desempenho em queda ou após 20 temporadas.
+function querAposentar(estado, pend, rng) {
+  if (pend.obrigatoria) return true;
+  if (estado.carreira.temporadasProfissionais >= 20) return true;
+  // Quando a pauta aparece por saúde ou desempenho, decide caso a caso (nem todas param na hora).
+  const emQueda = estado.idade >= 33 && (estado.overall < 55 || estado.atributos.saude < 40);
+  return emQueda && rng.chance(0.5);
+}
+
+function escolherCaminho(estado, rng) {
+  const possiveis = Object.entries(CAMINHOS_POS_CARREIRA)
+    .filter(([, c]) => !c.exige || c.exige(estado))
+    .map(([id]) => id);
+  return rng.escolher(possiveis);
+}
+
 export function resolverPendenciaAuto(estado, rng) {
   const p = estado.pendencia;
   if (!p) return null;
@@ -36,6 +54,12 @@ export function resolverPendenciaAuto(estado, rng) {
     case 'free-agency':
     case 'proposta-alternativo':
       return escolherProposta(estado, rng, melhorIndiceDeProposta(p.propostas));
+    case 'evento':
+      return resolverEvento(estado, rng, escolhaAutomatica(estado, rng));
+    case 'aposentadoria':
+      return querAposentar(estado, p, rng)
+        ? decidirAposentadoria(estado, rng, 'aposentar', escolherCaminho(estado, rng))
+        : decidirAposentadoria(estado, rng, 'continuar');
     default:
       throw new Error(`Pendência desconhecida: ${p.tipo}`);
   }
@@ -71,7 +95,8 @@ export function ajustarVidaAuto(estado, rng, politica) {
   }
 }
 
-// Simula uma carreira inteira no automático e devolve métricas para balanceamento.
+// Simula uma carreira inteira no automático (até se aposentar ou atingir o limite de temporadas)
+// e devolve métricas para balanceamento.
 export function simularCarreira({
   semente, perfil = 'versatil', dificuldade = 'normal', politica = 'equilibrada', temporadas = 15,
   aoFimDaTemporada = null,
@@ -92,8 +117,9 @@ export function simularCarreira({
     while (estado.pendencia) resolverPendenciaAuto(estado, rng);
   };
 
-  for (let t = 0; t < temporadas; t++) {
+  for (let t = 0; t < temporadas && !estado.aposentada; t++) {
     resolver();
+    if (estado.aposentada) break;
     ajustarVidaAuto(estado, rng, politica);
     while (estado.semana <= estado.semanasTemporada) {
       resolver();
@@ -117,8 +143,11 @@ export function simularCarreira({
   }
   resolver();
   metricas.faseFinal = estado.fase;
+  metricas.aposentada = estado.aposentada;
   metricas.dinheiroFinal = estado.dinheiro;
   metricas.fama = Math.round(estado.fama);
   metricas.overall = estado.overall;
+  metricas.pontos = estado.legado?.pontos ?? null;
+  metricas.nivel = estado.legado?.nivel ?? null;
   return { estado, rng, metricas };
 }

@@ -34,6 +34,39 @@ export {
 } from './mercado.js';
 export { executarSelecao, decidirSelecao, confirmarSelecao } from './selecao.js';
 export {
+  CHAVES_RELACAO,
+  ROTULOS_RELACAO,
+  criarRelacoes,
+  ajustarRelacao,
+  efeitosRelacoes,
+  patrocinioSemanal,
+} from './relacoes.js';
+export {
+  criarRivais,
+  rankingDaTemporada,
+  rivalMaisQuente,
+  famaDaRival,
+} from './rivais.js';
+export {
+  EVENTOS,
+  temFlag,
+  marcarFlag,
+  tentarEvento,
+  resolverEvento,
+  escolhaAutomatica,
+} from './eventos.js';
+export {
+  MARCOS,
+  CAMINHOS_POS_CARREIRA,
+  verificarMarcos,
+  calcularPontos,
+  classificar,
+  pautaAposentadoria,
+  aposentar,
+  decidirAposentadoria,
+  resumoDeCarreira,
+} from './carreira.js';
+export {
   POLITICAS_VIDA,
   resolverPendenciaAuto,
   ajustarVidaAuto,
