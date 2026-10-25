@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node test/simulacao.test.js",
-    "start": "node scripts/servir.js"
+    "start": "node scripts/servir.js",
+    "e2e": "node test/e2e-navegador.mjs"
   }
 }

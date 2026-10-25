@@ -29,11 +29,22 @@ export function lerMeta(slot) {
   }
 }
 
+// Confere o essencial do estado: um save adulterado ou de outra versão não pode derrubar o jogo.
+function estruturaValida(d) {
+  const e = d?.estado;
+  return d?.versao === 1 && Number.isInteger(d.rng) && e && typeof e === 'object'
+    && typeof e.nome === 'string' && e.atributos && e.relacoes && e.liga?.agencias && e.carreira
+    && Array.isArray(e.rivais) && Array.isArray(e.historico) && Array.isArray(e.resumos) && Array.isArray(e.eventos)
+    && Array.isArray(e.agendaAtual) && Array.isArray(e.extras) && e.vida && e.memoria && e.agencia
+    && Number.isFinite(e.dinheiro) && Number.isInteger(e.semana) && Number.isInteger(e.temporada);
+}
+
 export function carregarSlot(slot) {
   try {
     const bruto = localStorage.getItem(chave(slot));
     if (!bruto) return null;
     const dados = JSON.parse(bruto);
+    if (!estruturaValida(dados)) return null;
     return { estado: dados.estado, rng: criarRng(dados.rng) };
   } catch {
     return null;

@@ -44,7 +44,7 @@ function boasVindas() {
     h('ul', { class: 'passos' },
       h('li', null, h('strong', null, 'Cada semana:'), ' escolha os trabalhos da agenda. Cada um custa energia e tem uma chance de dar certo, com chance de virar destaque.'),
       h('li', null, h('strong', null, 'Cada ano:'), ' seus atributos evoluem. Depois da primeira temporada você decide se vai à Noite da Seleção agora ou ganha mais um ano de preparo.'),
-      h('li', null, h('strong', null, 'Sempre:'), ' cuide do dinheiro (aba Vida), das relações e das rivais. Decisões de hoje voltam como consequência anos depois.')),
+      h('li', null, h('strong', null, 'Sempre:'), ' cuide do dinheiro, das relações e das rivais. Quando o caixa permitir, invista no padrão de vida (aba Vida): é o que mais ajuda a chegar longe. Decisões de hoje voltam como consequência anos depois.')),
     h('div', { class: 'acoes' }, h('button', { class: 'btn grande', onClick: fecharModal }, 'Começar')),
   ]);
 }

@@ -19,6 +19,15 @@ Depois é só abrir o endereço no navegador. O jogo salva sozinho em 3 slots (n
 - Janelas de decisão para cada pendência do motor: ir ou ficar na Seleção, a Noite da Seleção revelada escolha por escolha (com suspense), propostas de free agency, eventos com escolhas e a aposentadoria com os quatro caminhos. A carreira termina na tela de legado.
 - Código em `src/ui/`: `acoes.js` liga os botões ao motor (nenhuma regra de jogo fica na interface), `abas.js`, `modais.js`, `inicio.js`, `jogo.js`, `save.js`.
 
+### Teste e balanceamento (Fase 5)
+
+```bash
+npm test         # motor: regras, calibragem financeira e de legado
+npm run e2e      # navegador: joga carreiras inteiras pela interface (precisa do Playwright: npm i -D playwright && npx playwright install chromium)
+```
+
+O teste de navegador joga 4 carreiras completas (perfis e dificuldades diferentes), recarrega a página no meio de decisões, abre saves corrompidos, simula navegador sem armazenamento e confere o celular. Dificuldades medidas em 60 carreiras cada (Hall da Fama + Lenda: 47% no fácil, 37% no normal, 23% no difícil; lesões por 100 semanas: 1,1 / 1,8 / 3,0). Quem ignora a aba Vida termina, na maioria das vezes, com uma carreira discreta (mediana de 82 pontos contra 181 de quem investe), por isso a interface mostra o efeito de cada nível e avisa quando o caixa está folgado.
+
 ## Estado do motor: Fase 3 (vida da carreira)
 
 Tudo é JavaScript puro (módulos ES), sem build e sem dependências. Requer Node 18 ou mais novo.
@@ -102,4 +111,4 @@ simularSemana(estado, rng, escolherAutomatico(estado, agenda));
 2. **Fase 2, mercado:** Noite da Seleção, contratos, free agency, trocas, circuito alternativo e sistema Vida com calibragem. (feito)
 3. **Fase 3, vida da carreira:** Relações com peso real, rivais, eventos com memória, aposentadoria e Hall da Fama. (feito)
 4. **Fase 4, interface:** nome (Primeira Capa), identidade visual, telas e salvamento em 3 slots. (feito)
-5. **Fase 5, teste e balanceamento:** teste de carreira inteira no navegador, ajuste final de dificuldades.
+5. **Fase 5, teste e balanceamento:** teste de carreira inteira no navegador, saves à prova de erro, dicas de Vida e dificuldades medidas. (feito)

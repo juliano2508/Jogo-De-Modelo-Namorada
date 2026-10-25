@@ -5,7 +5,7 @@ import {
   calcularChance, custoReal, capacidadeDeEnergia, semanaDeModa, efeitosVida, efeitosRelacoes,
   rankingDaTemporada, famaDaRival, calcularPontos, classificar, patrocinioSemanal, TIPOS,
 } from '../engine/index.js';
-import { CATEGORIAS_VIDA, custoDoNivel, nivelMaximo, inflacao, custoSemanalVida, custoBasico } from '../engine/vida.js';
+import { CATEGORIAS_VIDA, criarVidaInicial, inflacao, custoSemanalVida, custoBasico } from '../engine/vida.js';
 import { ctx } from './ctx.js';
 import {
   h, dinheiro, dinheiroCurto, pct, sinal, barra, FASE_NOME, TIER_NOME, TIPO_EVENTO_ROTULO,
@@ -71,6 +71,18 @@ function linhaConta(rotulo, valor, destaque = false) {
   return [h('dt', { class: destaque ? 'forte' : '' }, rotulo), h('dd', { class: `${valor < 0 ? 'neg' : ''} ${destaque ? 'forte' : ''}` }, dinheiro(valor))];
 }
 
+// Há folga para subir algum nível sem apertar o caixa (12 semanas de gastos de reserva, depois da taxa)?
+function podeInvestirEmVida(e) {
+  if (e.fase === 'regional' || e.dinheiro <= 0) return false;
+  const gasto = Math.max(1, custoSemanalVida(e) + custoBasico(e));
+  const infl = inflacao(e);
+  return CATEGORIAS.some((cat) => {
+    const atual = e.vida[cat];
+    const prox = CATEGORIAS_VIDA[cat].niveis[atual + 1];
+    return prox && e.dinheiro - 2 * prox.custo * infl >= gasto * 12 + prox.custo * infl * 10;
+  });
+}
+
 export function abaSemana() {
   const e = ctx.jogo.estado;
   prepararAgenda();
@@ -98,6 +110,14 @@ export function abaSemana() {
   if (ctx.ui.piloto) {
     const p = ctx.ui.piloto;
     raiz.append(h('div', { class: 'faixa' }, `Piloto automático: ${p.semanas} semana(s), ${p.trabalhos} trabalhos (${p.destaques} destaques), resultado de ${dinheiro(p.liquido)}.`));
+  }
+
+  if (podeInvestirEmVida(e) && ctx.ui.dicaVida !== e.temporada) {
+    raiz.append(h('div', { class: 'faixa dica-vida' },
+      h('span', null, h('strong', null, 'Seu caixa está folgado. '), 'Melhorar o padrão de vida (moradia, equipe, estilo...) aumenta suas chances, sua fama e a recuperação do cansaço.'),
+      h('span', { class: 'faixa-acoes' },
+        h('button', { class: 'btn pequeno', onClick: () => { ctx.ui.dicaVida = e.temporada; ctx.ui.aba = 'vida'; ctx.render(); } }, 'Ver aba Vida'),
+        h('button', { class: 'btn fantasma pequeno', onClick: () => { ctx.ui.dicaVida = e.temporada; ctx.render(); } }, 'Agora não'))));
   }
 
   raiz.append(h('section', { class: 'cartao' },
@@ -153,6 +173,18 @@ export function abaPerfil() {
 
 // ---------------- Vida ----------------
 
+// Resumo curto do que um nível entrega sozinho (sem os outros gastos), para ajudar a decidir onde investir.
+function efeitoDoNivel(cat, nivel) {
+  const ef = efeitosVida({ ...criarVidaInicial(), [cat]: nivel, tipoRelacionamento: 'mulher' });
+  const partes = [];
+  if (ef.chance > 0.001) partes.push(`+${(ef.chance * 100).toFixed(1).replace('.', ',')} pts de chance`);
+  if (ef.fama > 0.001) partes.push(`+${Math.round(ef.fama * 100)}% de fama`);
+  if (ef.custoEnergia > 0.001) partes.push(`−${Math.round(ef.custoEnergia * 100)}% de energia`);
+  if (ef.recuperacao > 0.01) partes.push(`+${ef.recuperacao.toFixed(1).replace('.', ',')} de recuperação`);
+  if (ef.lesao > 0.001) partes.push(`−${Math.round(ef.lesao * 100)}% de lesão`);
+  return partes.join(' · ');
+}
+
 const EFEITOS_ROTULO = (ef) => [
   ['Chance de sucesso', `+${(ef.chance * 100).toFixed(1).replace('.', ',')} pontos`],
   ['Fama por trabalho', `+${Math.round(ef.fama * 100)}%`],
@@ -194,6 +226,7 @@ export function abaVida() {
         },
         h('span', { class: 'n-nome' }, n.nome),
         h('span', { class: 'n-custo' }, custo === 0 ? 'Grátis' : `${dinheiro(custo)}/sem`),
+        h('span', { class: 'n-efeito' }, efeitoDoNivel(cat, i) || 'Sem efeito'),
         taxa > 0 && h('span', { class: 'n-taxa' }, `Taxa única ${dinheiro(taxa)}`)));
       })));
   };
