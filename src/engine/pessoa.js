@@ -93,6 +93,7 @@ export function criarPessoa(rng, { idade = 0, sobrenome = null } = {}) {
     parceiro: null,
     ex: [],
     filhos: [],
+    dependencia: { bebida: 0, cigarro: 0 },
     habitos: { sono: 1, exercicio: 1, bebida: 0, cigarro: 0, autocuidado: 0 },
     eventosVistos: [],
     fila: [], // eventos do ano ainda por acontecer

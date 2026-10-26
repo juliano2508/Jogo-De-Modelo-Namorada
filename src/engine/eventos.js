@@ -166,7 +166,7 @@ export const EVENTOS = [
     tipo: 'neutro',
     peso: 6,
     urgente: true,
-    condicao: (e) => Boolean(e.lesao) && e.lesao.semanasRestantes >= 3 && !temFlag(e, 'decidiu_lesao'),
+    condicao: (e) => Boolean(e.lesao) && e.lesao.semanasRestantes >= 3 && !e.lesao.licenca && !temFlag(e, 'decidiu_lesao'),
     preparar: () => ({}),
     texto: (e) => `Faltam ${e.lesao.semanasRestantes} semanas de recuperação, mas a agenda está cheia. Dá para voltar mais cedo, com risco de recaída.`,
     padraoAuto: 'descansar',
@@ -614,9 +614,36 @@ export const EVENTOS = [
 
 // ---------- Sorteio e resolução ----------
 
+// Vida pessoal adulta: abre o que estiver na fila (luto, por exemplo) ou sorteia um evento de vez em quando.
+export function tentarEventoAdulto(estado, rng) {
+  const p = estado.pessoa;
+  if (!p || estado.modo !== 'carreira') return null;
+  if (p.fila.length > 0) return abrirProximoEventoDeVida(estado, rng);
+  if (estado.eventoVidaCooldown > 0) { estado.eventoVidaCooldown -= 1; return null; }
+  if (!rng.chance(0.05 + (estado.fama >= 60 ? 0.03 : 0))) return null;
+
+  const cfg = DIFICULDADES[estado.dificuldade];
+  const vistos = new Set(p.eventosVistos);
+  const pool = EVENTOS_VIDA.filter((ev) => ev.idadeMin >= 18 && ev.peso > 0 && (ev.unico === false || !vistos.has(ev.id)) && ev.condicao(estado));
+  if (pool.length === 0) return null;
+  const pesos = pool.map((ev) => ev.peso * (ev.tipo === 'negativo' ? cfg.eventosNegativos : 1));
+  let sorteio = rng.proximo() * pesos.reduce((a, b) => a + b, 0);
+  let escolhido = pool[0];
+  for (let i = 0; i < pool.length; i++) {
+    sorteio -= pesos[i];
+    if (sorteio <= 0) { escolhido = pool[i]; break; }
+  }
+  p.fila.push(escolhido.id);
+  estado.eventoVidaCooldown = 3;
+  return abrirProximoEventoDeVida(estado, rng);
+}
+
 // Tenta abrir um evento ao fim de uma semana. Só na carreira profissional e no circuito alternativo.
 export function tentarEvento(estado, rng) {
-  if (estado.fase === 'regional' || estado.pendencia) return null;
+  if (estado.pendencia) return null;
+  const adulto = tentarEventoAdulto(estado, rng);
+  if (adulto) return adulto;
+  if (estado.fase === 'regional') return null;
   if (estado.eventoCooldown > 0) return null;
 
   const cfg = DIFICULDADES[estado.dificuldade];

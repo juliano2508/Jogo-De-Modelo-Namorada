@@ -5,44 +5,10 @@
 // marcas (flags) que liberam eventos futuros, como o olheiro que procura a família e a agência que cobra taxa.
 
 import { DIFICULDADES } from './config.js';
-import { temFlag, marcarFlag } from './memoria.js';
-import {
-  STATS_PESSOAIS, CLASSES, mudarStat, ganharAfinidade, mexerNaFamilia, parentesco, irmaos, familiaViva,
-  conhecerAmigo, registrarDiario,
-} from './pessoa.js';
-
-const prim = (nome) => (nome ?? '').split(' ')[0];
-const nomeDe = (e, papel, padrao) => prim(parentesco(e, papel)?.nome) || padrao;
-const mae = (e) => nomeDe(e, 'mae', 'sua mãe');
-const pai = (e) => nomeDe(e, 'pai', 'seu pai');
-const avo = (e) => nomeDe(e, 'avo', 'sua avó');
-const amigoAleatorio = (e, rng) => (e.pessoa.amigos.length ? rng.escolher(e.pessoa.amigos) : null);
-
-// Aplica o pacote de efeitos de uma escolha.
-//   stats: { felicidade: 3, estudos: -2 }   afin: { passarela: 2 }   familia: { mae: 4, pai: -2, irmaos: 3, avo: 2 }
-//   amigos: 4 (todos os amigos)   novoAmigo: true   flag: 'chave' | ['a', 'b']   dinheiro: -100
-export function aplicarFx(e, rng, fx = {}) {
-  for (const stat of STATS_PESSOAIS) if (fx[stat]) mudarStat(e, stat, fx[stat]);
-  for (const [perfil, n] of Object.entries(fx.afin ?? {})) ganharAfinidade(e, perfil, n);
-  for (const [alvo, delta] of Object.entries(fx.familia ?? {})) {
-    if (alvo === 'irmaos') irmaos(e).forEach((i) => mexerNaFamilia(e, i.id, delta));
-    else mexerNaFamilia(e, alvo, delta);
-  }
-  if (fx.amigos) for (const a of e.pessoa.amigos) a.relacao = Math.max(0, Math.min(100, a.relacao + fx.amigos));
-  if (fx.novoAmigo) conhecerAmigo(e, rng);
-  if (fx.dinheiro) e.dinheiro += fx.dinheiro;
-  for (const f of [fx.flag].flat().filter(Boolean)) marcarFlag(e, f, null);
-}
-
-// Atalho para montar uma escolha com efeitos fixos e um texto de resultado.
-const esc = (id, texto, resultado, fx = {}) => ({
-  id,
-  texto,
-  aplicar(e, rng, c) {
-    aplicarFx(e, rng, fx);
-    return typeof resultado === 'function' ? resultado(e, c) : resultado;
-  },
-});
+import { temFlag } from './memoria.js';
+import { CLASSES, mudarStat, ganharAfinidade, parentesco, irmaos, conhecerAmigo, registrarDiario } from './pessoa.js';
+import { prim, mae, pai, avo, esc, aplicarFx } from './fx.js';
+import { EVENTOS_ADULTOS } from './eventos-adultos.js';
 
 const classeNome = (e) => CLASSES[e.pessoa.classe].nome;
 
@@ -501,6 +467,7 @@ export const EVENTOS_VIDA = [
       esc('sozinha', 'Ficar um tempo sozinha', 'Você se recolheu e, no dia seguinte, a coisa já estava mais leve.', { felicidade: -1, criatividade: 1 }),
     ],
   },
+  ...EVENTOS_ADULTOS,
 ];
 
 for (const ev of EVENTOS_VIDA) ev.vida = true;

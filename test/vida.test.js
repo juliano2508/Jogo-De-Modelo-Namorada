@@ -4,7 +4,11 @@ import {
   criarJogo, simularSemana, gerarAgenda, avancarTemporada, avancarAnoDeVida, iniciarCarreiraDeModelo,
   perfilEmergente, fazerAtividade, atividadesDisponiveis, tempoLivreDoAno, resolverPendenciaAuto,
   resolverEvento, simularCarreira, aplicarFx, marcarFlag, temFlag, parentesco, irmaos,
+  EVENTOS, EVENTOS_ADULTOS, mudarHabito, buscarAjuda, aplicarHabitosAnuais, custoHabitosSemanal, custoFilhosSemanal,
+  energiaDosFilhos, efeitosHabitos,
 } from '../src/engine/index.js';
+import { perderParente } from '../src/engine/pessoa-adulta.js';
+import { tentarEventoAdulto } from '../src/engine/eventos.js';
 import { viverAteOsDezoito } from '../src/engine/auto.js';
 import { prepararEventosDoAno } from '../src/engine/eventos-vida.js';
 
@@ -24,6 +28,25 @@ function adolescente(semente = 1) {
   for (let i = 0; i < 3; i++) estado.pessoa.amigos.push({ id: `amigo-${i}`, nome: `Amiga ${i} Teste`, idade: 15, relacao: 50, origem: 'escola', desde: 10 });
   if (!parentesco(estado, 'avo')) estado.pessoa.familia.push({ id: 'avo-t', papel: 'avo', nome: 'Vó Teste', idade: 70, vivo: true, ausente: false, profissao: null, relacao: 70 });
   if (irmaos(estado).length === 0) estado.pessoa.familia.push({ id: 'irmao-t', papel: 'irmao', nome: 'Irmão Teste', idade: 12, vivo: true, ausente: false, profissao: null, relacao: 60 });
+  return { estado, rng };
+}
+
+// Estado de adulta com parceiro, filho, família, amigos, dinheiro e fama para exercitar os eventos da vida adulta.
+function adulta(semente = 1, ev = null) {
+  const { estado, rng } = criarJogo({ semente, inicio: 'aos18' });
+  estado.idade = 26;
+  estado.dinheiro = 20000;
+  estado.fama = 60;
+  const p = estado.pessoa;
+  p.fila = [];
+  p.parceiro = { id: 'par-t', nome: 'Caio Teste', sexo: 'm', idade: 28, profissao: 'fotógrafo', relacao: ev?.id === 'casamento' || ev?.id === 'pedido-de-casamento' ? 80 : 50, status: ev?.id === 'casamento' ? 'noivado' : 'namoro', desdeIdade: 24, origem: 'encontro' };
+  p.filhos.push({ id: 'filho-t', nome: 'Davi', sexo: 'm', idade: 4, relacao: 70 });
+  for (let i = 0; i < 2; i++) p.amigos.push({ id: `amigo-${i}`, nome: `Amiga ${i} Teste`, idade: 26, relacao: 50, origem: 'escola', desde: 10 });
+  const pai = p.familia.find((f) => f.papel === 'pai');
+  if (pai) { pai.ausente = true; pai.vivo = true; }
+  const mae = p.familia.find((f) => f.papel === 'mae');
+  if (mae) mae.vivo = true;
+  if (ev?.id === 'luto') p.ultimoLuto = { id: mae.id, papel: 'mae' };
   return { estado, rng };
 }
 
@@ -100,8 +123,8 @@ function adolescente(semente = 1) {
     assert.ok(ev.escolhas.some((c) => c.id === ev.padraoAuto), `${ev.id}: padrão automático inexistente`);
     assert.ok(ev.idadeExata !== undefined || (ev.idadeMin <= ev.idadeMax), `${ev.id}: faixa de idade inválida`);
     for (const escolha of ev.escolhas) {
-      const { estado, rng } = adolescente(3);
-      estado.idade = ev.idadeExata ?? ev.idadeMin;
+      const { estado, rng } = ev.idadeMin >= 18 ? adulta(3, ev) : adolescente(3);
+      if (ev.idadeMin < 18) estado.idade = ev.idadeExata ?? ev.idadeMin;
       marcarFlag(estado, 'olheiro_contato', null);
       marcarFlag(estado, 'avo_doente', null);
       const ctx = ev.preparar ? ev.preparar(estado, rng) : {};
@@ -252,6 +275,89 @@ function adolescente(semente = 1) {
   assert.ok(alto >= 0.1 && alto <= 0.7, `Hall da Fama + Lenda fora do esperado: ${alto}`);
   assert.ok(pontos[N / 2] >= 90 && pontos[N / 2] <= 260, `mediana de pontos fora do esperado: ${pontos[N / 2]}`);
   assert.ok(vermelho / N <= 0.35, `muitas carreiras no vermelho: ${vermelho / N}`);
+}
+
+// 13) Hábitos: níveis, custos, dependência e tratamento.
+{
+  const { estado, rng } = adulta(21);
+  assert.throws(() => mudarHabito(estado, 'bebida', 5), /Nível inválido/);
+  assert.throws(() => mudarHabito(estado, 'xx', 1), /inválido/);
+  const custo0 = custoHabitosSemanal(estado);
+  mudarHabito(estado, 'exercicio', 3);
+  mudarHabito(estado, 'autocuidado', 2);
+  assert.ok(custoHabitosSemanal(estado) > custo0, 'hábitos melhores custam mais');
+  assert.ok(custoFilhosSemanal(estado) > 0, 'filho pequeno custa dinheiro');
+  assert.ok(energiaDosFilhos(estado) >= 4, 'filho pequeno cansa');
+  const antes = efeitosHabitos(estado);
+  mudarHabito(estado, 'sono', 0);
+  assert.ok(efeitosHabitos(estado).recuperacao < antes.recuperacao, 'dormir mal piora a recuperação');
+
+  mudarHabito(estado, 'bebida', 2);
+  mudarHabito(estado, 'cigarro', 2);
+  for (let i = 0; i < 6; i++) aplicarHabitosAnuais(estado, rng);
+  assert.ok(estado.pessoa.dependencia.bebida >= 60 && estado.pessoa.dependencia.cigarro >= 60, 'uso pesado cria dependência');
+  assert.throws(() => mudarHabito(estado, 'bebida', 0), /ajuda profissional/);
+  estado.dinheiro = 100;
+  assert.throws(() => buscarAjuda(estado, 'bebida'), /insuficiente/);
+  estado.dinheiro = 50000;
+  buscarAjuda(estado, 'bebida');
+  assert.equal(estado.pessoa.habitos.bebida, 0);
+  assert.ok(estado.pessoa.dependencia.bebida < 20);
+  assert.ok(estado.lesao.licenca && estado.lesao.semanasRestantes === 6, 'tratamento afasta por 6 semanas');
+  checarPessoa(estado);
+  // Infância não tem hábitos de substâncias.
+  const nasc = criarJogo({ semente: 22, inicio: 'nascimento' }).estado;
+  assert.throws(() => mudarHabito(nasc, 'bebida', 1), /18 anos/);
+}
+
+// 14) Vida adulta dentro da carreira: eventos, parceiro, gravidez com licença, luto e mesma semente.
+{
+  const resumo = (semente) => {
+    const { estado } = simularCarreira({ semente, perfil: 'versatil', temporadas: 12 });
+    return JSON.stringify({ d: estado.diario.length, dec: estado.memoria.decisoes.length, p: estado.pessoa.parceiro?.nome ?? null, f: estado.pessoa.filhos.length, din: estado.dinheiro });
+  };
+  assert.equal(resumo(77), resumo(77), 'mesma semente, mesma vida adulta');
+
+  let comParceiro = 0; let comFilhos = 0; let luto = 0; let eventosAdultos = 0;
+  const idsAdultos = new Set(EVENTOS_ADULTOS.map((e) => e.id));
+  const N = 40;
+  for (let i = 0; i < N; i++) {
+    const { estado } = simularCarreira({ semente: 900 + i, perfil: Object.keys(PERFIS)[i % 4], temporadas: 14 });
+    checarPessoa(estado);
+    if (estado.pessoa.parceiro || estado.pessoa.ex.length) comParceiro++;
+    if (estado.pessoa.filhos.length) comFilhos++;
+    if (estado.pessoa.familia.some((f) => !f.vivo)) luto++;
+    eventosAdultos += estado.memoria.decisoes.filter((d) => idsAdultos.has(d.evento)).length;
+    for (const f of estado.pessoa.filhos) assert.ok(f.idade >= 0);
+  }
+  console.log(`vida adulta em ${N} carreiras: ${comParceiro} tiveram romance, ${comFilhos} filhos, ${luto} perdas na família, ${(eventosAdultos / N).toFixed(1)} eventos adultos por carreira`);
+  assert.ok(comParceiro >= N * 0.3, 'romances deveriam ser comuns');
+  assert.ok(eventosAdultos / N >= 4, 'a vida adulta deveria ter eventos');
+
+  // Gravidez: licença sem trabalho, sem evento de recuperação de lesão, e depois volta.
+  const g = EVENTOS_ADULTOS.find((e) => e.id === 'gravidez');
+  const { estado, rng } = adulta(31, g);
+  estado.pessoa.parceiro.relacao = 80;
+  estado.lesao = null;
+  estado.pendencia = { tipo: 'evento', evento: { id: 'gravidez', titulo: g.titulo, vida: true, texto: '', ctx: {}, escolhas: [], padraoAuto: 'licenca' } };
+  const filhos0 = estado.pessoa.filhos.length;
+  resolverEvento(estado, rng, 'licenca');
+  assert.equal(estado.pessoa.filhos.length, filhos0 + 1);
+  assert.ok(estado.lesao.licenca);
+  const rec = EVENTOS.find((e) => e.id === 'recuperacao-lesao');
+  assert.equal(rec.condicao(estado), false, 'licença não é lesão');
+  gerarAgenda(estado, rng);
+  const sem = simularSemana(estado, rng, estado.agendaAtual.slice(0, 2).map((o) => o.id));
+  assert.equal(sem.resultados.length, 0, 'em licença não há trabalho');
+  assert.equal(estado.lesao.semanasRestantes, 9);
+
+  // Luto: o parente morre, a fila abre o evento e o diário registra.
+  const l = adulta(32);
+  const mae = l.estado.pessoa.familia.find((f) => f.papel === 'mae');
+  perderParente(l.estado, mae);
+  assert.equal(mae.vivo, false);
+  const aberto = tentarEventoAdulto(l.estado, l.rng);
+  assert.equal(aberto?.id, 'luto');
 }
 
 console.log('Testes da vida pessoal: todos passaram.');

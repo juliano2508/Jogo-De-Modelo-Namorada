@@ -1,3 +1,4 @@
+import { energiaDosFilhos } from './habitos.js';
 // Criação da modelo e estado inicial do jogo.
 // O estado é só dados simples (serializável em JSON), para facilitar salvar e testar.
 
@@ -86,6 +87,7 @@ export function criarJogo({
     marcos: [],
     semanaAbsoluta: 0,
     eventoCooldown: 0,
+    eventoVidaCooldown: 0,
     aposentada: false,
     legado: null,
     caminhoPosCarreira: null,
@@ -111,5 +113,5 @@ export function criarJogo({
 }
 
 export function capacidadeDeEnergia(estado) {
-  return Math.round(60 + estado.atributos.resistencia * 0.4);
+  return Math.max(30, Math.round(60 + estado.atributos.resistencia * 0.4) - energiaDosFilhos(estado));
 }

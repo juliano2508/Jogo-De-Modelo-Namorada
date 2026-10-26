@@ -4,6 +4,8 @@ import { ATRIBUTOS, limitar, calcularOverall } from './atributos.js';
 import { MARCAS, REVISTAS, SEMANAS_DE_MODA } from './mundo.js';
 import { FASES, DIFICULDADES, BONUS_ACESSO_POR_TIER } from './config.js';
 import { capacidadeDeEnergia } from './modelo.js';
+import { efeitosHabitos } from './habitos.js';
+import { avancarAnoAdulto } from './pessoa-adulta.js';
 import { efeitosVida, liquidarSemana, inflacao } from './vida.js';
 import { gerarPropostas, verificarTroca, verificarChamada, registrarEvento } from './mercado.js';
 import { atualizarLiga } from './liga.js';
@@ -53,6 +55,7 @@ export function calcularChance(estado, oferta) {
   chance += rel.chance + rel.chancePorTipo(oferta.tipo);
   chance -= estado.cansaco / 250;
   chance += efeitosVida(estado.vida).chance;
+  chance += efeitosHabitos(estado).chance;
   chance += ajustePorRival(estado, oferta);
   if (estado.dinheiro < 0) chance -= 0.04; // pressão financeira
   return limitarValor(chance, 0.05, 0.95);
@@ -164,6 +167,7 @@ export function simularSemana(estado, rng, idsEscolhidos = []) {
 
   const cfg = DIFICULDADES[estado.dificuldade];
   const efeitos = efeitosVida(estado.vida);
+  const hab = efeitosHabitos(estado);
   const rel = efeitosRelacoes(estado);
   const famaMult = rel.fama * estado.extras.reduce((m, x) => m * x.famaMult, 1);
   const emLesao = estado.lesao && estado.lesao.semanasRestantes > 0;
@@ -218,7 +222,7 @@ export function simularSemana(estado, rng, idsEscolhidos = []) {
   } else {
     estado.cansaco -= (60 - gasto) / 3;
   }
-  estado.cansaco -= efeitos.recuperacao + rel.recuperacao;
+  estado.cansaco -= efeitos.recuperacao + rel.recuperacao + hab.recuperacao;
   if (estado.dinheiro < 0) estado.cansaco += 2;
   estado.cansaco = limitarValor(estado.cansaco, 0, 100);
 
@@ -238,7 +242,7 @@ export function simularSemana(estado, rng, idsEscolhidos = []) {
   } else {
     const recaida = temFlag(estado, 'recaida_risco') ? 2 : 1;
     const risco =
-      0.01 * (1 + (100 - estado.atributos.saude) / 50) * (1 + estado.cansaco / 50) * cfg.riscoLesao * (1 - efeitos.lesao) * recaida;
+      0.01 * (1 + (100 - estado.atributos.saude) / 50) * (1 + estado.cansaco / 50) * cfg.riscoLesao * Math.max(0.2, 1 - efeitos.lesao + hab.lesao) * recaida;
     if (rng.chance(risco)) {
       novaLesao = { semanasRestantes: rng.inteiro(2, 5) };
       estado.lesao = novaLesao;
@@ -326,6 +330,7 @@ export function avancarTemporada(estado, rng) {
 
   estado.idade += 1;
   estado.temporada += 1;
+  avancarAnoAdulto(estado, rng);
   estado.semana = 1;
   estado.cansaco = 0;
   estado.lesao = null;

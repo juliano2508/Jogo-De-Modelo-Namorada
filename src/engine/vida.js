@@ -1,3 +1,4 @@
+import { custoHabitosSemanal, custoFilhosSemanal } from './habitos.js';
 // Sistema Vida: onde a modelo gasta o dinheiro, o que cada gasto devolve e o que acontece no vermelho.
 // Regras: custos reais, retorno decrescente em cada categoria e despesas fixas que crescem.
 
@@ -90,7 +91,7 @@ export const inflacao = (estado) => (1 + INFLACAO_ANUAL) ** (estado.temporada - 
 export function custoSemanalVida(estado) {
   let total = 0;
   for (const c of CATEGORIAS) total += custoDoNivel(c, estado.vida[c]);
-  return Math.round(total * inflacao(estado));
+  return Math.round(total * inflacao(estado)) + custoHabitosSemanal(estado) + custoFilhosSemanal(estado);
 }
 
 export function custoBasico(estado) {

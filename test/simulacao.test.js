@@ -360,9 +360,11 @@ function estadoPro(semente = 1) {
 // 17) Sorteio de eventos: respeita fase, pendência e cooldown; abre pendência jogável.
 {
   const reg = criarJogo({ semente: 14 });
+  reg.estado.pessoa = null; // aqui só os eventos de carreira; a vida pessoal é testada em vida.test.js
   for (let i = 0; i < 300; i++) assert.equal(tentarEvento(reg.estado, reg.rng), null, 'regional não tem eventos');
 
   const { estado, rng } = estadoPro(15);
+  estado.pessoa = null;
   estado.pendencia = { tipo: 'selecao' };
   for (let i = 0; i < 300; i++) assert.equal(tentarEvento(estado, rng), null, 'não abre evento com outra pendência');
   estado.pendencia = null;
@@ -388,6 +390,7 @@ function estadoPro(semente = 1) {
       const { estado } = simularCarreira({ semente: 300 + i, perfil: Object.keys(PERFIS)[i % 4], dificuldade, temporadas: 30 });
       temporadasPro += estado.carreira.temporadasProfissionais;
       for (const d of estado.memoria.decisoes) {
+        if (!(d.evento in naturezas)) continue; // eventos da vida pessoal ficam de fora desta conta
         total++;
         if (naturezas[d.evento] === 'negativo') negativos++;
       }

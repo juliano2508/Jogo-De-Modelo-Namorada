@@ -76,7 +76,11 @@ export {
   CLASSES, STATS_PESSOAIS, ROTULOS_STATS, criarPessoa, registrarDiario, parentesco, irmaos, familiaViva,
 } from './pessoa.js';
 export { ATIVIDADES, atividadesDisponiveis, fazerAtividade, tempoLivreDoAno } from './atividades.js';
-export { EVENTOS_VIDA, aplicarFx } from './eventos-vida.js';
+export { EVENTOS_VIDA } from './eventos-vida.js';
+export { aplicarFx } from './fx.js';
 export {
   emVida, iniciarVida, avancarAnoDeVida, iniciarCarreiraDeModelo, perfilEmergente, atividadesAutomaticas,
 } from './anos.js';
+export * from './habitos.js';
+export { criarParceiro, terminarRelacao, adicionarFilho, STATUS_PARCEIRO } from './pessoa-adulta.js';
+export { EVENTOS_ADULTOS } from './eventos-adultos.js';
