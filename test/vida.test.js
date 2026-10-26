@@ -155,7 +155,7 @@ function adulta(semente = 1, ev = null) {
   estado.pessoa.tempoLivre = 3;
   assert.throws(() => fazerAtividade(estado, rng, 'inexistente'), /inválida/);
   assert.throws(() => fazerAtividade(estado, rng, 'familia', 'ninguem'), /parente/);
-  assert.throws(() => fazerAtividade(estado, rng, 'brincar'), /nesta idade/, 'brincar não existe aos 15');
+  assert.throws(() => fazerAtividade(estado, rng, 'brincar'), /não está disponível/, 'brincar não existe aos 15');
   const idades = (id) => ATIVIDADES.find((a) => a.id === id);
   assert.ok(idades('trabalhinho').idadeMin >= 14, 'trabalho só a partir dos 14');
   estado.idade = 4;

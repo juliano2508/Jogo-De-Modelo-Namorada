@@ -53,6 +53,14 @@ function criarParente(rng, papel, nome, idade, sobrenome, profissao, relacaoBase
   };
 }
 
+// As listas de profissões misturam gêneros; cada pessoa recebe a forma certa.
+const PARA_FEMININO = { enfermeiro: 'enfermeira', 'técnico em informática': 'técnica em informática', engenheiro: 'engenheira', empresário: 'empresária' };
+const PARA_MASCULINO = {
+  'vendedora ambulante': 'vendedor ambulante', cozinheira: 'cozinheiro', professora: 'professor', bancária: 'bancário',
+  secretária: 'secretário', advogada: 'advogado', médica: 'médico', arquiteta: 'arquiteto',
+};
+const profissaoDe = (prof, sexo) => (sexo === 'f' ? PARA_FEMININO : PARA_MASCULINO)[prof] ?? prof;
+
 // Gera a pessoa já com a família. `idade` é a idade da modelo no começo da história (0 ou 18).
 export function criarPessoa(rng, { idade = 0, sobrenome = null } = {}) {
   const classeId = rng.escolher(['humilde', 'humilde', 'media', 'media', 'media', 'confortavel']);
@@ -60,10 +68,12 @@ export function criarPessoa(rng, { idade = 0, sobrenome = null } = {}) {
   const sn = sobrenome ?? rng.escolher(SOBRENOMES);
   const familia = [];
 
-  const mae = criarParente(rng, 'mae', nomeAleatorio(rng, 'f'), idade + rng.inteiro(20, 36), sn, rng.escolher(classe.profissoes), 72);
+  const mae = criarParente(rng, 'mae', nomeAleatorio(rng, 'f'), idade + rng.inteiro(20, 36), sn, null, 72);
+  mae.profissao = profissaoDe(rng.escolher(classe.profissoes), 'f');
   familia.push(mae);
   const paiAusente = rng.chance(0.15);
-  const pai = criarParente(rng, 'pai', nomeAleatorio(rng, 'm'), idade + rng.inteiro(22, 40), sn, rng.escolher(classe.profissoes), paiAusente ? 30 : 65);
+  const pai = criarParente(rng, 'pai', nomeAleatorio(rng, 'm'), idade + rng.inteiro(22, 40), sn, null, paiAusente ? 30 : 65);
+  pai.profissao = profissaoDe(rng.escolher(classe.profissoes), 'm');
   pai.ausente = paiAusente;
   familia.push(pai);
 
@@ -87,7 +97,7 @@ export function criarPessoa(rng, { idade = 0, sobrenome = null } = {}) {
     },
     afinidades: { passarela: 0, editorial: 0, comercial: 0, versatil: 0 },
     atividadePrincipal: null,
-    tempoLivre: 0,
+    tempoLivre: idade >= 18 ? 2 : 0,
     familia,
     amigos: [],
     parceiro: null,

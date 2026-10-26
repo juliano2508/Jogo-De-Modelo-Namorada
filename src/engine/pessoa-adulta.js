@@ -53,6 +53,7 @@ export function avancarAnoAdulto(estado, rng) {
   const p = estado.pessoa;
   if (!p) return;
   aplicarHabitosAnuais(estado, rng);
+  p.tempoLivre = 2;
   envelhecerPessoas(estado, rng);
 
   for (const parente of p.familia) {

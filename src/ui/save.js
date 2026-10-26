@@ -10,7 +10,7 @@ export function salvarSlot(slot, estado, rng) {
   try {
     const meta = {
       nome: estado.nome, idade: estado.idade, temporada: estado.temporada, fase: estado.fase,
-      agencia: estado.agencia.nome, aposentada: estado.aposentada, nivel: estado.legado?.nivel ?? null,
+      agencia: estado.agencia.nome, modo: estado.modo ?? 'carreira', aposentada: estado.aposentada, nivel: estado.legado?.nivel ?? null,
       salvoEm: Date.now(),
     };
     localStorage.setItem(chave(slot), JSON.stringify({ versao: 1, meta, estado, rng: rng.estadoInterno() }));
@@ -39,12 +39,28 @@ function estruturaValida(d) {
     && Number.isFinite(e.dinheiro) && Number.isInteger(e.semana) && Number.isInteger(e.temporada);
 }
 
+// Saves antigos (antes da vida pessoal ou da vida adulta) ganham os campos novos sem perder nada.
+function migrar(e) {
+  if (e.pessoa) {
+    e.pessoa.dependencia ??= { bebida: 0, cigarro: 0 };
+    e.pessoa.habitos ??= { sono: 1, exercicio: 1, bebida: 0, cigarro: 0, autocuidado: 0 };
+    e.pessoa.ex ??= [];
+    e.pessoa.filhos ??= [];
+    e.pessoa.fila ??= [];
+    e.pessoa.eventosVistos ??= [];
+    e.pessoa.tempoLivre ??= 0;
+    e.diario ??= [];
+  }
+  e.eventoVidaCooldown ??= 0;
+}
+
 export function carregarSlot(slot) {
   try {
     const bruto = localStorage.getItem(chave(slot));
     if (!bruto) return null;
     const dados = JSON.parse(bruto);
     if (!estruturaValida(dados)) return null;
+    migrar(dados.estado);
     return { estado: dados.estado, rng: criarRng(dados.rng) };
   } catch {
     return null;

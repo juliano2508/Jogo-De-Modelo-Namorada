@@ -22,7 +22,7 @@ export function telaInicio() {
     }
     const detalhe = meta.aposentada
       ? `Aposentada · ${meta.nivel ?? ''}`
-      : `${FASE_NOME[meta.fase] ?? meta.fase} · ${meta.agencia}`;
+      : meta.modo === 'vida' ? 'Crescendo' : `${FASE_NOME[meta.fase] ?? meta.fase} · ${meta.agencia}`;
     return h('li', { class: 'slot' },
       h('div', null,
         h('strong', null, `${meta.nome}`),
@@ -44,14 +44,14 @@ export function telaInicio() {
     masthead(),
     h('section', { class: 'cartao' },
       h('h2', null, 'Sua carreira'),
-      h('p', null, 'Comece no circuito regional, conquiste uma agência na Noite da Seleção, desfile nas quatro semanas de moda e chegue ao Hall da Fama.'),
+      h('p', null, 'Nasça, cresça, faça escolhas, descubra que tipo de modelo você vai ser. Depois conquiste uma agência na Noite da Seleção, desfile nas quatro semanas de moda e chegue ao Hall da Fama, sem esquecer da vida fora da passarela.'),
       h('button', { class: 'btn grande', onClick: () => { ctx.tela = 'criacao'; ctx.render(); } }, 'Nova carreira')),
     h('section', { class: 'cartao' }, h('h2', null, 'Jogos salvos'), h('ul', { class: 'slots' }, slots)),
     h('p', { class: 'rodape' }, 'Todos os nomes de marcas, revistas, agências e modelos são paródias fictícias.'));
 }
 
 export function telaCriacao() {
-  const form = { perfil: 'versatil', dificuldade: 'normal', slot: SLOTS.find((n) => !lerMeta(n)) ?? 1 };
+  const form = { inicio: 'nascimento', perfil: 'versatil', dificuldade: 'normal', slot: SLOTS.find((n) => !lerMeta(n)) ?? 1 };
   const nome = h('input', { id: 'nome', type: 'text', maxlength: 28, placeholder: 'Como ela se chama?', autocomplete: 'off' });
   const origem = h('select', { id: 'origem' }, CIDADES_DE_ORIGEM.map((c) => h('option', { value: c, selected: c === 'Curitiba' }, c)));
   const semente = h('input', { id: 'semente', type: 'number', min: 1, placeholder: 'Opcional' });
@@ -69,6 +69,18 @@ export function telaCriacao() {
     return caixa;
   };
 
+  const botao = h('button', { type: 'submit', class: 'btn grande' }, 'Nascer');
+  const inicios = grupo('inicio', [
+    ['nascimento', 'Ao nascer', 'Viva a infância e a juventude, escolha atividades e enfrente eventos. O seu perfil de modelo nasce de como você viver.'],
+    ['aos18', 'Aos 18 anos', 'Pule a infância e comece direto na carreira, escolhendo o perfil.'],
+  ]);
+  const blocoPerfil = h('div', { class: 'bloco-perfil' });
+  const desenharPerfil = () => {
+    if (form.inicio !== 'aos18') { blocoPerfil.replaceChildren(); return; }
+    blocoPerfil.replaceChildren(h('h3', null, 'Perfil'), perfis,
+      h('p', { class: 'dica' }, `Todas começam como novatas, com ${ATRIBUTOS.length} atributos entre 40 e 52. O perfil dá um empurrão em alguns deles e decide quais pesam mais no overall.`));
+  };
+  inicios.addEventListener('click', () => { desenharPerfil(); botao.textContent = form.inicio === 'nascimento' ? 'Nascer' : 'Começar a carreira'; });
   const perfis = grupo('perfil', Object.entries(PERFIS).map(([id, p]) => {
     const fortes = Object.entries(p.bonus).filter(([, v]) => v > 4).map(([a]) => ROTULOS[a]).join(', ');
     return [id, p.nome, PERFIL_TEXTO[id], h('em', null, `Ponto forte: ${fortes}`)];
@@ -90,7 +102,7 @@ export function telaCriacao() {
         const s = Number.parseInt(semente.value, 10);
         iniciarCarreira({
           nome: nome.value, origem: origem.value, perfil: form.perfil, dificuldade: form.dificuldade,
-          semente: Number.isInteger(s) && s > 0 ? s : undefined, slot: form.slot,
+          semente: Number.isInteger(s) && s > 0 ? s : undefined, slot: form.slot, inicio: form.inicio,
         });
       },
     },
@@ -98,8 +110,7 @@ export function telaCriacao() {
       h('div', { class: 'campos' },
         h('label', { for: 'nome' }, 'Nome', nome),
         h('label', { for: 'origem' }, 'Cidade de origem', origem)),
-      h('h3', null, 'Perfil'), perfis,
-      h('p', { class: 'dica' }, `Todas começam como novatas, com ${ATRIBUTOS.length} atributos entre 40 e 52. O perfil dá um empurrão em alguns deles e decide quais pesam mais no overall.`),
+      h('h3', null, 'Começar'), inicios, blocoPerfil,
       h('h3', null, 'Dificuldade'), dificuldades,
       h('h3', null, 'Salvar em'), slotsOpcoes,
       h('details', { class: 'avancado' },
@@ -107,5 +118,5 @@ export function telaCriacao() {
         h('label', { for: 'semente' }, 'Semente da carreira (a mesma semente gera a mesma história)', semente)),
       h('div', { class: 'acoes' },
         h('button', { type: 'button', class: 'btn fantasma', onClick: () => { ctx.tela = 'inicio'; ctx.render(); } }, 'Voltar'),
-        h('button', { type: 'submit', class: 'btn grande' }, 'Começar a carreira'))));
+        botao)));
 }

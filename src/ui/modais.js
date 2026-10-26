@@ -3,7 +3,7 @@
 
 import { CAMINHOS_POS_CARREIRA, PERFIS } from '../engine/index.js';
 import { ctx } from './ctx.js';
-import { h, dinheiro, pct, FASE_NOME, TIER_NOME, barra } from './util.js';
+import { h, dinheiro, pct, FASE_NOME, TIER_NOME, PERFIL_TEXTO, barra } from './util.js';
 import {
   fecharModal, decidirIrOuFicar, fazerSelecao, aceitarProposta, escolherNoEvento, decidirFimDeCarreira,
 } from './acoes.js';
@@ -20,6 +20,7 @@ export function modalAtual() {
   const m = ctx.ui.modal;
   if (m) {
     if (m.tipo === 'boas-vindas') return boasVindas();
+    if (m.tipo === 'perfil-nasceu') return perfilNasceu(m);
     if (m.tipo === 'resumo-temporada') return resumoTemporada(m.resumo);
     if (m.tipo === 'resultado-evento') return resultadoEvento(m);
     if (m.tipo === 'selecao-revelacao') return (m.el ??= revelacaoSelecao(m));
@@ -46,6 +47,17 @@ function boasVindas() {
       h('li', null, h('strong', null, 'Cada ano:'), ' seus atributos evoluem. Depois da primeira temporada você decide se vai à Noite da Seleção agora ou ganha mais um ano de preparo.'),
       h('li', null, h('strong', null, 'Sempre:'), ' cuide do dinheiro, das relações e das rivais. Quando o caixa permitir, invista no padrão de vida (aba Vida): é o que mais ajuda a chegar longe. Decisões de hoje voltam como consequência anos depois.')),
     h('div', { class: 'acoes' }, h('button', { class: 'btn grande', onClick: fecharModal }, 'Começar')),
+  ]);
+}
+
+function perfilNasceu(m) {
+  const e = ctx.jogo.estado;
+  const p = PERFIS[m.perfil];
+  return moldura(`${e.nome}, modelo`, [
+    h('p', null, `Tudo o que você viveu até aqui virou ${e.nome}: uma modelo de perfil ${p.nome.toLowerCase()}.`),
+    h('p', { class: 'citacao' }, PERFIL_TEXTO[m.perfil]),
+    h('p', { class: 'dica' }, 'Sua família, seus amigos e suas escolhas continuam com você. Cuide deles, e dos seus hábitos, enquanto persegue a capa da Vague.'),
+    h('div', { class: 'acoes' }, h('button', { class: 'btn grande', onClick: fecharModal }, 'Começar a carreira')),
   ]);
 }
 
@@ -171,7 +183,9 @@ function propostas(p) {
 }
 
 function evento(ev) {
+  const e = ctx.jogo.estado;
   return moldura(ev.titulo, [
+    ev.vida && h('p', { class: 'sub' }, e.idade === 0 ? 'Ao nascer' : `Aos ${e.idade} anos`),
     h('span', { class: `selo natureza-${ev.natureza}` }, { positivo: 'Oportunidade', negativo: 'Problema', neutro: 'Decisão' }[ev.natureza] ?? 'Decisão'),
     h('p', { class: 'citacao' }, ev.texto),
     h('div', { class: 'escolhas' }, ev.escolhas.map((c) => h('button', { class: 'btn escolha', onClick: () => escolherNoEvento(c.id) }, c.texto))),

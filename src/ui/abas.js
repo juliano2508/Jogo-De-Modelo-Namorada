@@ -105,7 +105,10 @@ export function abaSemana() {
   }, 0);
 
   if (moda) raiz.append(h('div', { class: 'faixa moda' }, h('strong', null, moda.nome), ' — desfiles extras na agenda, com mais prestígio e mais fama em jogo.'));
-  if (e.lesao) raiz.append(h('div', { class: 'faixa ruim' }, `Lesão: ${e.lesao.semanasRestantes} semana(s) de recuperação. Não há como trabalhar; descanse e siga em frente.`));
+  if (e.lesao?.licenca) raiz.append(h('div', { class: 'faixa' }, e.lesao.motivo === 'tratamento'
+    ? `Em tratamento: ${e.lesao.semanasRestantes} semana(s) afastada. Cuidar de si também é carreira.`
+    : `Licença: ${e.lesao.semanasRestantes} semana(s) em família. A agenda espera por você.`));
+  else if (e.lesao) raiz.append(h('div', { class: 'faixa ruim' }, `Lesão: ${e.lesao.semanasRestantes} semana(s) de recuperação. Não há como trabalhar; descanse e siga em frente.`));
   if (e.dinheiro < 0) raiz.append(h('div', { class: 'faixa ruim' }, 'Você está no vermelho: juros, pressão e, se durar, corte forçado do padrão de vida. Veja a aba Vida.'));
   if (ctx.ui.piloto) {
     const p = ctx.ui.piloto;

@@ -3,11 +3,37 @@
 import { ctx } from './ctx.js';
 import { h, dinheiro, dinheiroCurto, barra, FASE_NOME, TIER_NOME } from './util.js';
 import { ABAS } from './abas.js';
+import { abaDiario, abaFamilia, abaEu, abaHabitos, barraDeVida } from './pessoal.js';
+import { ROTULOS_STATS, CLASSES } from '../engine/index.js';
 import { modalAtual } from './modais.js';
 import { masthead } from './inicio.js';
 import { voltarAoMenu } from './acoes.js';
 
+const ABAS_VIDA = [['diario', 'Diário', abaDiario], ['familia', 'Família', abaFamilia], ['eu', 'Eu', abaEu]];
+
+// Na infância o painel é outro; na carreira, a vida pessoal entra como abas extras (se o save tiver vida pessoal).
+function abasDoEstado(e) {
+  if (e.modo === 'vida') return ABAS_VIDA;
+  if (!e.pessoa) return ABAS;
+  const extras = [['diario', 'Diário', abaDiario], ['familia', 'Família', abaFamilia], ['habitos', 'Hábitos', abaHabitos]];
+  return [...ABAS.slice(0, 2), ...extras, ...ABAS.slice(2)];
+}
+
+function cabecalhoDeVida(e) {
+  const p = e.pessoa;
+  return h('header', { class: 'topo' },
+    h('div', { class: 'topo-linha' },
+      h('div', { class: 'topo-id' },
+        h('span', { class: 'marca-mini' }, 'Primeira Capa'),
+        h('h1', null, e.nome),
+        h('p', null, `${e.idade === 0 ? 'Recém-nascida' : `${e.idade} ${e.idade === 1 ? 'ano' : 'anos'}`} · ${e.origem} · ${CLASSES[p.classe].nome}`)),
+      h('button', { class: 'btn fantasma pequeno', onClick: voltarAoMenu }, 'Menu')),
+    h('div', { class: 'stats' }, Object.entries(ROTULOS_STATS).map(([k, rot]) =>
+      h('div', { class: 'stat' }, h('small', null, rot), barra(p.stats[k], 100, { classe: p.stats[k] < 30 ? 'alerta' : '', rotulo: rot })))));
+}
+
 function cabecalho(e) {
+  if (e.modo === 'vida') return cabecalhoDeVida(e);
   const stat = (rot, val, classe = '') => h('div', { class: `stat ${classe}` }, h('small', null, rot), h('strong', null, val));
   return h('header', { class: 'topo' },
     h('div', { class: 'topo-linha' },
@@ -28,14 +54,16 @@ export function telaJogo() {
   const e = ctx.jogo.estado;
   if (e.aposentada) return telaLegado(e);
 
-  const abas = h('nav', { class: 'abas', role: 'tablist' }, ABAS.map(([id, nome]) => h('button', {
+  const lista = abasDoEstado(e);
+  if (!lista.some(([id]) => id === ctx.ui.aba)) ctx.ui.aba = lista[0][0];
+  const abas = h('nav', { class: 'abas', role: 'tablist' }, lista.map(([id, nome]) => h('button', {
     type: 'button', role: 'tab', class: `aba-btn ${ctx.ui.aba === id ? 'ativa' : ''}`, 'aria-selected': ctx.ui.aba === id,
     onClick: () => { ctx.ui.aba = id; ctx.render(); },
   }, nome)));
 
-  const [, , desenhar] = ABAS.find(([id]) => id === ctx.ui.aba) ?? ABAS[0];
+  const [, , desenhar] = lista.find(([id]) => id === ctx.ui.aba) ?? lista[0];
   const modal = modalAtual();
-  return h('main', { class: 'pagina jogo' }, cabecalho(e), abas, desenhar(), modal);
+  return h('main', { class: `pagina jogo ${e.modo === 'vida' ? 'vida' : ''}` }, cabecalho(e), abas, desenhar(), e.modo === 'vida' && !e.pendencia && barraDeVida(), modal);
 }
 
 function telaLegado(e) {

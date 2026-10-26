@@ -126,7 +126,7 @@ export function iniciarCarreiraDeModelo(estado, rng) {
 
   estado.modo = 'carreira';
   p.aguardandoCarreira = false;
-  p.tempoLivre = 0;
+  p.tempoLivre = 2;
   registrarDiario(estado, `Começa a carreira de modelo, no perfil ${PERFIS[estado.perfil].nome}.`, 'marco');
   registrarEvento(estado, 'fase', `${estado.nome} começa a carreira de modelo em ${estado.agencia.nome}, no perfil ${PERFIS[estado.perfil].nome}.`);
   return estado.perfil;

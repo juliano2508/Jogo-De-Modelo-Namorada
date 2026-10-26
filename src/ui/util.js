@@ -42,6 +42,7 @@ export function barra(valor, max = 100, { classe = '', rotulo = '' } = {}) {
 }
 
 export const FASE_NOME = {
+  vida: 'Crescendo',
   regional: 'Circuito regional',
   alternativo: 'Circuito alternativo',
   profissional: 'Carreira profissional',
@@ -65,7 +66,7 @@ export const DIFICULDADE_TEXTO = {
 
 export const TIPO_EVENTO_ROTULO = {
   fase: 'Carreira', selecao: 'Seleção', contrato: 'Contrato', troca: 'Troca', chamada: 'Chamada',
-  lesao: 'Lesão', evento: 'Evento', rival: 'Rival', aposentadoria: 'Aposentadoria', marco: 'Marco',
+  lesao: 'Lesão', saude: 'Saúde', evento: 'Evento', rival: 'Rival', aposentadoria: 'Aposentadoria', marco: 'Marco',
 };
 
 export function toast(texto, tipo = 'info') {

@@ -1,6 +1,7 @@
 // Atividades da vida pessoal: o tempo livre do ano, gasto como a jogadora preferir (estilo BitLife).
 // Cada atividade tem uma faixa de idade, efeitos pequenos e retorno decrescente.
 
+import { calcularOverall, ROTULOS } from './atributos.js';
 import {
   mudarStat, ganharAfinidade, mexerNaFamilia, mexerNoAmigo, registrarDiario, conhecerAmigo,
 } from './pessoa.js';
@@ -65,7 +66,11 @@ export const ATIVIDADES = [
   },
   {
     id: 'descansar', nome: 'Descansar e cuidar de você', descricao: 'Dormir cedo, respirar, não fazer nada.', idadeMin: 0, idadeMax: 99, alvo: null,
-    aplicar(e) { ganho(e, 'saude', 3); ganho(e, 'felicidade', 3); return 'Você acordou renovada.'; },
+    aplicar(e) {
+      ganho(e, 'saude', 3); ganho(e, 'felicidade', 3);
+      if (e.modo === 'carreira') e.cansaco = Math.max(0, e.cansaco - 15);
+      return 'Você acordou renovada.';
+    },
   },
   {
     id: 'familia', nome: 'Passar tempo com a família', descricao: 'Escolha com quem.', idadeMin: 0, idadeMax: 99, alvo: 'familia',
@@ -88,15 +93,51 @@ export const ATIVIDADES = [
       return a ? `Você e ${primeiroNome(a.nome)} passaram uma tarde ótima juntas.` : 'Foi um ótimo encontro.';
     },
   },
+  // ----- Vida adulta -----
+  {
+    id: 'encontro', nome: 'Sair com quem você ama', descricao: 'Um jantar, um passeio, tempo só de vocês.', idadeMin: 18, idadeMax: 99, alvo: null,
+    disponivel: (e) => Boolean(e.pessoa.parceiro),
+    aplicar(e) {
+      const par = e.pessoa.parceiro;
+      par.relacao = Math.min(100, par.relacao + 10);
+      e.dinheiro -= 150;
+      ganho(e, 'felicidade', 4);
+      return `Você e ${primeiroNome(par.nome)} tiveram uma noite só de vocês dois.`;
+    },
+  },
+  {
+    id: 'tempo-filhos', nome: 'Passar o dia com os filhos', descricao: 'Brincar, ouvir, estar presente.', idadeMin: 18, idadeMax: 99, alvo: null,
+    disponivel: (e) => e.pessoa.filhos.length > 0,
+    aplicar(e) {
+      for (const f of e.pessoa.filhos) f.relacao = Math.min(100, f.relacao + 10);
+      ganho(e, 'felicidade', 4);
+      if (e.modo === 'carreira') e.cansaco = Math.min(100, e.cansaco + 5);
+      return 'Foi um dia cansativo e inesquecível.';
+    },
+  },
+  {
+    id: 'curso', nome: 'Fazer um curso', descricao: 'Aperfeiçoar o que mais precisa (R$ 600).', idadeMin: 18, idadeMax: 99, alvo: null,
+    disponivel: (e) => e.modo === 'carreira' && e.dinheiro >= 600,
+    aplicar(e, rng) {
+      const fracos = Object.entries(e.atributos).sort((a, b) => a[1] - b[1]).slice(0, 3).map(([a]) => a);
+      const alvo = rng.escolher(fracos);
+      e.atributos[alvo] = Math.min(99, e.atributos[alvo] + 1);
+      e.overall = calcularOverall(e.atributos, e.perfil);
+      e.dinheiro -= 600;
+      e.cansaco = Math.min(100, e.cansaco + 5);
+      return `O curso melhorou seu ${ROTULOS[alvo].toLowerCase()}.`;
+    },
+  },
 ];
 
 export const atividadePorId = (id) => ATIVIDADES.find((a) => a.id === id);
 
 export function atividadesDisponiveis(estado) {
-  return ATIVIDADES.filter((a) => estado.idade >= a.idadeMin && estado.idade <= a.idadeMax);
+  return ATIVIDADES.filter((a) => estado.idade >= a.idadeMin && estado.idade <= a.idadeMax && (!a.disponivel || a.disponivel(estado)));
 }
 
 export function tempoLivreDoAno(idade) {
+  if (idade >= 18) return 2;
   return idade <= 10 ? 3 : 4;
 }
 
@@ -107,7 +148,7 @@ export function fazerAtividade(estado, rng, id, alvo = null) {
   if (estado.pendencia) throw new Error(`Resolva a pendência antes: ${estado.pendencia.tipo}.`);
   const ativ = atividadePorId(id);
   if (!ativ) throw new Error(`Atividade inválida: ${id}`);
-  if (estado.idade < ativ.idadeMin || estado.idade > ativ.idadeMax) throw new Error('Essa atividade não está disponível nesta idade.');
+  if (estado.idade < ativ.idadeMin || estado.idade > ativ.idadeMax || (ativ.disponivel && !ativ.disponivel(estado))) throw new Error('Essa atividade não está disponível agora.');
   if (p.tempoLivre <= 0) throw new Error('Você já usou todo o tempo livre deste ano.');
   if (ativ.alvo === 'familia' && !p.familia.some((f) => f.vivo && f.id === alvo)) throw new Error('Escolha um parente.');
   if (ativ.alvo === 'amigo' && alvo && !p.amigos.some((a) => a.id === alvo)) throw new Error('Escolha um amigo.');

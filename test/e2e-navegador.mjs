@@ -41,6 +41,7 @@ async function novaPagina(opcoes = {}) {
 async function criarCarreira(p, { nome, perfil, dificuldade }) {
   await p.click('text=Nova carreira');
   await p.fill('#nome', nome);
+  await p.click('.opcao:has-text("Aos 18 anos")');
   await p.click(`.opcao:has-text("${perfil}")`);
   await p.click(`.opcao:has-text("${dificuldade}")`);
   await p.click('text=Começar a carreira');
@@ -157,9 +158,94 @@ try {
     }
     await p.click('.aba-btn:has-text("Semana")');
     await p.click('text=Piloto automático da temporada');
+    // A vida pessoal pode interromper o piloto com uma decisão: resolve antes de seguir.
+    while (await p.locator('.modal').count()) {
+      const m = p.locator('.modal');
+      if (await m.locator('.btn.escolha:not([disabled])').count()) await m.locator('.btn.escolha:not([disabled])').first().click();
+      else await m.locator('button.btn').last().click();
+    }
     await p.click('.aba-btn:has-text("Carreira")');
     await larguraOk('Carreira com temporadas');
     console.log('ok: celular sem rolagem horizontal');
+    await p.context().close();
+  }
+
+  // 6) Vida inteira desde o nascimento: infância, atividades, envelhecer, perfil nasce e a carreira segue.
+  {
+    const p = await novaPagina({ viewport: { width: 360, height: 740 } });
+    const larguraOk = async (rotulo) => {
+      const estoura = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      assert.equal(estoura, false, `rolagem horizontal em ${rotulo}`);
+    };
+    await p.click('text=Nova carreira');
+    await p.fill('#nome', 'Do Berço');
+    await p.click('button[type=submit]');
+    assert.ok(await p.locator('.modal h2:has-text("Você nasceu")').count(), 'o primeiro evento é o nascimento');
+    // Resolve eventos até a tela de vida liberar, usa atividades e envelhece até os 18.
+    let atividadesFeitas = 0;
+    for (let i = 0; i < 400; i++) {
+      if (await p.locator('button:has-text("Começar a carreira de modelo")').count()) break;
+      if (await p.locator('.modal').count()) {
+        const m = p.locator('.modal');
+        if (await m.locator('.btn.escolha').count()) await m.locator('.btn.escolha').first().click();
+        else await m.locator('button.btn').last().click();
+        continue;
+      }
+      if (atividadesFeitas < 6 && await p.locator('.atividade button:not([disabled])').count()) {
+        await p.locator('.atividade button:not([disabled])').first().click();
+        atividadesFeitas++;
+        continue;
+      }
+      await p.click('button:has-text("Envelhecer")');
+    }
+    assert.ok(atividadesFeitas > 0, 'deveria conseguir fazer atividades');
+    await larguraOk('infância');
+    for (const aba of ['Família', 'Eu', 'Diário']) {
+      await p.click(`.aba-btn:has-text("${aba}")`);
+      await larguraOk(aba);
+    }
+    assert.ok(await p.locator('.diario-ano').count() > 3, 'o diário deveria ter vários anos');
+    await p.click('button:has-text("Começar a carreira de modelo")');
+    assert.ok(await p.locator('.modal h2:has-text("modelo")').count(), 'deveria mostrar o perfil que nasceu da vida');
+    await p.click('.modal button:has-text("Começar a carreira")');
+    for (const aba of ['Diário', 'Família', 'Hábitos', 'Semana']) {
+      await p.click(`.aba-btn:has-text("${aba}")`);
+      await larguraOk(`${aba} (carreira)`);
+    }
+    // Hábitos: escolher um nível custa dinheiro por semana e fica marcado.
+    await p.click('.aba-btn:has-text("Hábitos")');
+    await p.locator('.habito:has-text("Exercício") .nivel').nth(2).click();
+    assert.equal(await p.locator('.habito:has-text("Exercício") .nivel.ativo').innerText().then((t) => /Regular/.test(t)), true);
+    await p.click('.aba-btn:has-text("Semana")');
+    for (let i = 0; i < 400; i++) {
+      if (await p.locator('.capa').count()) break;
+      await passo(p);
+    }
+    assert.ok(await p.locator('.capa').count(), 'a carreira nascida da infância deveria chegar ao legado');
+    console.log(`ok: vida desde o nascimento até o legado (${await p.locator('.capa h2').innerText()})`);
+    await p.context().close();
+  }
+
+  // 7) Save da fase 6A (sem hábitos nem dependência) abre e joga sem quebrar.
+  {
+    const p = await novaPagina();
+    await p.click('text=Nova carreira');
+    await p.fill('#nome', 'Save Antigo');
+    await p.click('.opcao:has-text("Aos 18 anos")');
+    await p.click('text=Começar a carreira');
+    await p.click('.modal button:has-text("Começar")');
+    await p.evaluate(() => {
+      const d = JSON.parse(localStorage.getItem('primeira-capa:slot:1'));
+      delete d.estado.pessoa.dependencia; delete d.estado.pessoa.habitos; delete d.estado.eventoVidaCooldown;
+      localStorage.setItem('primeira-capa:slot:1', JSON.stringify(d));
+    });
+    await p.reload();
+    await p.click('button:has-text("Continuar")');
+    await p.click('.aba-btn:has-text("Hábitos")');
+    assert.ok(await p.locator('.habito').count() === 5, 'save antigo deveria ganhar os hábitos');
+    await p.click('.aba-btn:has-text("Semana")');
+    await p.click('text=Piloto automático da temporada');
+    console.log('ok: save antigo migrado');
     await p.context().close();
   }
 

@@ -19,10 +19,20 @@ Depois é só abrir o endereço no navegador. O jogo salva sozinho em 3 slots (n
 - Janelas de decisão para cada pendência do motor: ir ou ficar na Seleção, a Noite da Seleção revelada escolha por escolha (com suspense), propostas de free agency, eventos com escolhas e a aposentadoria com os quatro caminhos. A carreira termina na tela de legado.
 - Código em `src/ui/`: `acoes.js` liga os botões ao motor (nenhuma regra de jogo fica na interface), `abas.js`, `modais.js`, `inicio.js`, `jogo.js`, `save.js`.
 
+### Vida pessoal, estilo BitLife (Fase 6)
+
+A história agora pode começar **ao nascer** (ou aos 18, pulando a infância):
+
+- **Infância e juventude (0 a 17):** cada ano traz eventos com escolhas (escola, amigos, família, primeiro namoro, olheiros e golpes de agência) e algumas atividades de tempo livre (dança, teatro, estudar, redes, bico, família, amigos...). Botão **Envelhecer** passa o ano; o diário conta tudo. O **perfil de modelo nasce do que a jogadora viveu**, e estudos, saúde, disciplina e decisões da juventude viram atributos e relações na carreira.
+- **Vida adulta:** namoro, noivado e casamento, gravidez com licença da carreira, filhos (custam dinheiro e energia), luto, pedidos de ajuda da família, amizades, paparazzi e boatos, golpes financeiros. Acontecem durante a carreira, misturados com os eventos profissionais.
+- **Hábitos:** sono, exercício, bebida, cigarro e saúde mental, cada um com níveis, custo semanal e efeito em cansaço, chance, lesão e saúde. Bebida e cigarro só existem depois dos 18, criam dependência e, quando a pessoa não consegue largar sozinha, pedem tratamento (6 semanas afastada).
+- Sem mecânicas de peso, dieta ou aparência corporal, e sem conteúdo sexual: é uma vida "humana", não um simulador de excessos.
+- Código: `pessoa.js`, `anos.js`, `atividades.js`, `eventos-vida.js` (infância), `eventos-adultos.js`, `pessoa-adulta.js`, `habitos.js`, `fx.js` (linguagem de efeitos dos eventos), `memoria.js`; interface em `src/ui/pessoal.js`. Saves antigos são migrados sozinhos.
+
 ### Teste e balanceamento (Fase 5)
 
 ```bash
-npm test         # motor: regras, calibragem financeira e de legado
+npm test         # motor: regras, vida pessoal, hábitos, calibragem financeira e de legado
 npm run e2e      # navegador: joga carreiras inteiras pela interface (precisa do Playwright: npm i -D playwright && npx playwright install chromium)
 ```
 
@@ -93,6 +103,8 @@ src/engine/
   eventos.js    catálogo de eventos, memória e escolhas
   carreira.js   marcos, aposentadoria, Hall da Fama
   auto.js       modo automático e simularCarreira
+  pessoa.js, anos.js, atividades.js, eventos-vida.js, eventos-adultos.js,
+  pessoa-adulta.js, habitos.js, fx.js, memoria.js   vida pessoal (Fase 6)
 ```
 
 ### Exemplo de uso
@@ -112,3 +124,4 @@ simularSemana(estado, rng, escolherAutomatico(estado, agenda));
 3. **Fase 3, vida da carreira:** Relações com peso real, rivais, eventos com memória, aposentadoria e Hall da Fama. (feito)
 4. **Fase 4, interface:** nome (Primeira Capa), identidade visual, telas e salvamento em 3 slots. (feito)
 5. **Fase 5, teste e balanceamento:** teste de carreira inteira no navegador, saves à prova de erro, dicas de Vida e dificuldades medidas. (feito)
+6. **Fase 6, vida pessoal:** começar ao nascer, eventos com escolhas, família, relacionamentos, hábitos e vida adulta, com interface estilo BitLife. (feito)

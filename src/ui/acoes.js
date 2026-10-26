@@ -3,6 +3,7 @@
 import {
   criarJogo, gerarAgenda, simularSemana, escolherAutomatico, avancarTemporada, mudarVida,
   decidirSelecao, confirmarSelecao, escolherProposta, resolverEvento, decidirAposentadoria, custoReal, capacidadeDeEnergia,
+  avancarAnoDeVida, iniciarCarreiraDeModelo, fazerAtividade, mudarHabito, buscarAjuda,
 } from '../engine/index.js';
 import { ctx } from './ctx.js';
 import { salvarSlot, carregarSlot } from './save.js';
@@ -33,12 +34,13 @@ function executar(fn) {
   }
 }
 
-export function iniciarCarreira({ nome, origem, perfil, dificuldade, semente, slot }) {
-  const parametros = { nome: nome.trim() || 'Nova Modelo', origem, perfil, dificuldade };
+export function iniciarCarreira({ nome, origem, perfil, dificuldade, semente, slot, inicio = 'nascimento' }) {
+  const parametros = { nome: nome.trim() || 'Nova Modelo', origem, dificuldade, inicio };
+  if (inicio === 'aos18') parametros.perfil = perfil;
   if (Number.isInteger(semente)) parametros.semente = semente;
   const { estado, rng } = criarJogo(parametros);
   ctx.jogo = { estado, rng, slot };
-  ctx.ui = { aba: 'semana', selecao: new Set(), ultimo: null, modal: { tipo: 'boas-vindas' } };
+  ctx.ui = { aba: estado.modo === 'vida' ? 'diario' : 'semana', selecao: new Set(), ultimo: null, modal: estado.modo === 'vida' ? null : { tipo: 'boas-vindas' } };
   ctx.tela = 'jogo';
   salvar();
   ctx.render();
@@ -51,7 +53,7 @@ export function continuarCarreira(slot) {
     return;
   }
   ctx.jogo = { ...dados, slot };
-  ctx.ui = { aba: 'semana', selecao: new Set(), ultimo: null, modal: null };
+  ctx.ui = { aba: dados.estado.modo === 'vida' ? 'diario' : 'semana', selecao: new Set(), ultimo: null, modal: null };
   ctx.tela = 'jogo';
   ctx.render();
 }
@@ -59,7 +61,7 @@ export function continuarCarreira(slot) {
 // Garante que existe uma agenda para a semana atual (ela fica salva no estado).
 export function prepararAgenda() {
   const { estado, rng } = ctx.jogo;
-  if (estado.aposentada || estado.pendencia) return;
+  if (estado.aposentada || estado.pendencia || estado.modo === 'vida') return;
   if (estado.semana > estado.semanasTemporada) return;
   if (estado.agendaAtual.length === 0) gerarAgenda(estado, rng);
 }
@@ -183,4 +185,38 @@ export function voltarAoMenu() {
   ctx.tela = 'inicio';
   ctx.jogo = null;
   ctx.render();
+}
+
+// ---- Vida pessoal ----
+
+export function envelhecer() {
+  const { estado, rng } = ctx.jogo;
+  executar(() => avancarAnoDeVida(estado, rng));
+}
+
+export function comecarCarreira() {
+  const { estado, rng } = ctx.jogo;
+  const perfil = executar(() => iniciarCarreiraDeModelo(estado, rng));
+  if (perfil) {
+    ctx.ui.aba = 'semana';
+    ctx.ui.modal = { tipo: 'perfil-nasceu', perfil };
+    ctx.render();
+  }
+}
+
+export function fazerAtividadeUI(id, alvo) {
+  const { estado, rng } = ctx.jogo;
+  const texto = executar(() => fazerAtividade(estado, rng, id, alvo));
+  if (texto) toast(texto);
+}
+
+export function definirHabito(habito, nivel) {
+  const { estado } = ctx.jogo;
+  executar(() => mudarHabito(estado, habito, nivel));
+}
+
+export function pedirAjuda(substancia) {
+  const { estado } = ctx.jogo;
+  const custo = executar(() => buscarAjuda(estado, substancia));
+  if (custo) toast(`Você começou o tratamento (R$ ${custo.toLocaleString('pt-BR')}). Seis semanas de afastamento.`);
 }
