@@ -11,6 +11,8 @@ import { criarRelacoes } from './relacoes.js';
 import { criarRivais } from './rivais.js';
 import { criarCarreira } from './carreira.js';
 import { criarContrato, garantiaDeMercado } from './mercado.js';
+import { criarPessoa } from './pessoa.js';
+import { iniciarVida } from './anos.js';
 
 export function criarJogo({
   nome = 'Nova Modelo',
@@ -19,7 +21,10 @@ export function criarJogo({
   dificuldade = 'normal',
   semente,
   faseInicial = 'regional', // 'profissional' serve para testes e para pular o começo
+  inicio = 'aos18', // 'nascimento': a história começa no berço e o perfil nasce da vida vivida
 } = {}) {
+  const nascimento = inicio === 'nascimento';
+  if (nascimento && faseInicial !== 'regional') throw new Error('Começar no nascimento só combina com a fase regional.');
   if (!PERFIS[perfil]) {
     throw new Error(`Perfil inválido: ${perfil}. Use: ${Object.keys(PERFIS).join(', ')}`);
   }
@@ -33,7 +38,8 @@ export function criarJogo({
   // Atributos de novata: base entre 40 e 52, mais o bônus do perfil escolhido.
   const atributos = {};
   for (const a of ATRIBUTOS) {
-    const bonus = PERFIS[perfil].bonus[a] ?? 0;
+    // No nascimento o perfil ainda não existe: o bônus entra aos 18, conforme a vida vivida.
+    const bonus = nascimento ? 0 : PERFIS[perfil].bonus[a] ?? 0;
     atributos[a] = limitar(rng.inteiro(40, 52) + bonus);
   }
 
@@ -55,13 +61,14 @@ export function criarJogo({
     origem,
     perfil,
     dificuldade,
-    idade: 18,
+    idade: nascimento ? 0 : 18,
+    modo: nascimento ? 'vida' : 'carreira', // 'vida' = anos da infância e adolescência, antes da carreira
     // Talento oculto: quem tem potencial alto evolui mais e pode virar estrela; quem tem baixo estaciona.
     potencial: Math.round(Math.max(-1.5, Math.min(3, rng.normal(0, 1))) * 100) / 100,
     atributos,
     overall: calcularOverall(atributos, perfil),
     fama: 0, // 0 a 100
-    dinheiro: DINHEIRO_INICIAL,
+    dinheiro: nascimento ? 0 : DINHEIRO_INICIAL,
     semanasNoVermelho: 0,
     cansaco: 0, // 0 a 100
     lesao: null, // { semanasRestantes }
@@ -94,6 +101,11 @@ export function criarJogo({
     eventos: [], // marcos da carreira (contratos, Seleção, trocas)
   };
   if (faseInicial === 'profissional') estado.vida.moradia = 1;
+
+  // A pessoa por trás da modelo (família, amigos, estatísticas). Criada por último para não mexer nos sorteios anteriores.
+  estado.pessoa = criarPessoa(rng, { idade: estado.idade });
+  estado.diario = [];
+  if (nascimento) iniciarVida(estado, rng);
 
   return { estado, rng };
 }

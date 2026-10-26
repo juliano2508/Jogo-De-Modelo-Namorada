@@ -11,25 +11,18 @@ import { inflacao } from './vida.js';
 import { ajustarRelacao } from './relacoes.js';
 import { rivalMaisQuente, rivalPorId } from './rivais.js';
 import { registrarEvento } from './mercado.js';
+import { temFlag, marcarFlag } from './memoria.js';
+import { EVENTOS_VIDA, abrirProximoEventoDeVida } from './eventos-vida.js';
+import { registrarDiario } from './pessoa.js';
 
-const SEMANAS_POR_ANO = 40;
+import { SEMANAS_POR_ANO } from './memoria.js';
 const arred50 = (v) => Math.round(v / 50) * 50;
 const limitar = (v, min, max) => Math.max(min, Math.min(max, v));
 
 // ---------- Memória ----------
+// (as flags ficam em memoria.js, compartilhadas com os eventos da vida pessoal)
 
-export function temFlag(estado, chave) {
-  const f = estado.memoria.flags[chave];
-  return Boolean(f) && (f.ate === null || f.ate > estado.semanaAbsoluta);
-}
-
-export function marcarFlag(estado, chave, semanas = null, dados = {}) {
-  estado.memoria.flags[chave] = {
-    desde: estado.semanaAbsoluta,
-    ate: semanas === null ? null : estado.semanaAbsoluta + semanas,
-    dados,
-  };
-}
+export { temFlag, marcarFlag };
 
 const ganharFama = (estado, v) => {
   estado.fama = limitar(estado.fama + v, 0, 100);
@@ -668,14 +661,19 @@ export function tentarEvento(estado, rng) {
 export function resolverEvento(estado, rng, escolhaId) {
   const pend = estado.pendencia;
   if (pend?.tipo !== 'evento') throw new Error('Não há evento pendente.');
-  const def = EVENTOS.find((e) => e.id === pend.evento.id);
+  const def = [...EVENTOS, ...EVENTOS_VIDA].find((e) => e.id === pend.evento.id);
   const escolha = def.escolhas.find((c) => c.id === escolhaId);
   if (!escolha) throw new Error(`Escolha inválida para o evento ${def.id}: ${escolhaId}`);
 
   estado.pendencia = null;
   const resultado = escolha.aplicar(estado, rng, pend.evento.ctx);
   estado.memoria.decisoes.push({ evento: def.id, escolha: escolhaId, temporada: estado.temporada, semana: estado.semana });
-  registrarEvento(estado, 'evento', `${def.titulo}: ${escolha.texto}. ${resultado}`);
+  if (def.vida) {
+    registrarDiario(estado, `${def.titulo}: ${resultado}`, 'evento');
+    abrirProximoEventoDeVida(estado, rng);
+  } else {
+    registrarEvento(estado, 'evento', `${def.titulo}: ${escolha.texto}. ${resultado}`);
+  }
   return { evento: def.id, escolha: escolhaId, resultado };
 }
 

@@ -72,3 +72,11 @@ export {
   ajustarVidaAuto,
   simularCarreira,
 } from './auto.js';
+export {
+  CLASSES, STATS_PESSOAIS, ROTULOS_STATS, criarPessoa, registrarDiario, parentesco, irmaos, familiaViva,
+} from './pessoa.js';
+export { ATIVIDADES, atividadesDisponiveis, fazerAtividade, tempoLivreDoAno } from './atividades.js';
+export { EVENTOS_VIDA, aplicarFx } from './eventos-vida.js';
+export {
+  emVida, iniciarVida, avancarAnoDeVida, iniciarCarreiraDeModelo, perfilEmergente, atividadesAutomaticas,
+} from './anos.js';

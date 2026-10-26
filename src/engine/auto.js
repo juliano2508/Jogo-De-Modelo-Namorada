@@ -2,6 +2,7 @@
 // Serve para simular carreiras inteiras (testes, balanceamento) e para a simulação rápida das fases secundárias.
 
 import { criarJogo } from './modelo.js';
+import { emVida, avancarAnoDeVida, iniciarCarreiraDeModelo, atividadesAutomaticas } from './anos.js';
 import {
   gerarAgenda, escolherAutomatico, simularSemana, avancarTemporada,
 } from './semana.js';
@@ -39,6 +40,19 @@ function escolherCaminho(estado, rng) {
     .filter(([, c]) => !c.exige || c.exige(estado))
     .map(([id]) => id);
   return rng.escolher(possiveis);
+}
+
+// Vive do nascimento até os 18 e começa a carreira, escolhendo tudo sozinho.
+export function viverAteOsDezoito(estado, rng) {
+  while (emVida(estado)) {
+    while (estado.pendencia) resolverPendenciaAuto(estado, rng);
+    if (estado.pessoa.aguardandoCarreira) {
+      iniciarCarreiraDeModelo(estado, rng);
+      break;
+    }
+    atividadesAutomaticas(estado, rng);
+    avancarAnoDeVida(estado, rng);
+  }
 }
 
 export function resolverPendenciaAuto(estado, rng) {
@@ -99,9 +113,9 @@ export function ajustarVidaAuto(estado, rng, politica) {
 // e devolve métricas para balanceamento.
 export function simularCarreira({
   semente, perfil = 'versatil', dificuldade = 'normal', politica = 'equilibrada', temporadas = 15,
-  aoFimDaTemporada = null,
+  aoFimDaTemporada = null, inicio = 'aos18',
 } = {}) {
-  const { estado, rng } = criarJogo({ semente, perfil, dificuldade });
+  const { estado, rng } = criarJogo({ semente, perfil, dificuldade, inicio });
   const metricas = {
     semente,
     semanasNoVermelho: 0,
@@ -116,6 +130,9 @@ export function simularCarreira({
   const resolver = () => {
     while (estado.pendencia) resolverPendenciaAuto(estado, rng);
   };
+
+  // Anos da infância e da adolescência, quando a história começa no nascimento.
+  if (emVida(estado)) viverAteOsDezoito(estado, rng);
 
   for (let t = 0; t < temporadas && !estado.aposentada; t++) {
     resolver();

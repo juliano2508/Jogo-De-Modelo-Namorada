@@ -63,6 +63,7 @@ export function custoReal(estado, oferta) {
 }
 
 export function gerarAgenda(estado, rng) {
+  if (estado.modo === 'vida') throw new Error('A carreira ainda não começou: avance a vida até os 18 anos.');
   const moda = semanaDeModa(estado);
   const fase = FASES[estado.fase];
   const limite = limiteDeAcesso(estado);
@@ -152,6 +153,7 @@ function processarExtras(estado) {
 
 // Simula uma semana. `idsEscolhidos` são as ofertas que a jogadora decidiu disputar.
 export function simularSemana(estado, rng, idsEscolhidos = []) {
+  if (estado.modo === 'vida') throw new Error('A carreira ainda não começou: avance a vida até os 18 anos.');
   if (estado.aposentada) throw new Error('Carreira encerrada: a modelo já se aposentou.');
   if (estado.pendencia) {
     throw new Error(`Há uma pendência a resolver antes de seguir: ${estado.pendencia.tipo}.`);
@@ -286,6 +288,7 @@ function evoluirAtributoDoTipo(estado, tipoId, rng) {
 // Fim de temporada: guarda o resumo, fecha ranking e estatísticas, envelhece, evolui (ou declina)
 // e abre a próxima pendência (aposentadoria, decisão da Seleção, Seleção obrigatória ou free agency).
 export function avancarTemporada(estado, rng) {
+  if (estado.modo === 'vida') throw new Error('A carreira ainda não começou: avance a vida até os 18 anos.');
   if (estado.aposentada) throw new Error('Carreira encerrada: a modelo já se aposentou.');
   if (estado.pendencia) {
     throw new Error(`Resolva a pendência antes de avançar: ${estado.pendencia.tipo}.`);

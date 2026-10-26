@@ -4,7 +4,7 @@
   "description": "Primeira Capa: modo carreira de modelo de moda",
   "type": "module",
   "scripts": {
-    "test": "node test/simulacao.test.js",
+    "test": "node test/simulacao.test.js && node test/vida.test.js",
     "start": "node scripts/servir.js",
     "e2e": "node test/e2e-navegador.mjs"
   }
